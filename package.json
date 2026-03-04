@@ -1,0 +1,26 @@
+{
+  "name": "boilerplate-practice",
+  "version": "1.0.0",
+  "description": "My attempt in practicing the intern backend boilerplate provided",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [],
+  "author": "IanDude",
+  "license": "ISC",
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql": "^2.18.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "zod": "^4.3.6"
+  }
+}
