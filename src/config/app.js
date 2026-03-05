@@ -2,11 +2,19 @@
  * file for using express and run it on the server itself */
 import express from "express";
 import router from "../routes/router.js";
+import Database from "./database.js";
+import { responseWrapper } from "../middlewares/responseWrapper.js";
 // import cors from "cors";
 
 const app = express();
+const db = new Database(); //create db instance
+await db.initialize(); //initialize database connection by calling initialize method
 
 app.set("trust proxy", 1);
+
+//passport config
+
+//req id middleware
 
 //Body parsers - best practice to use in parsing json and forms into objects
 app.use(express.json({ limit: "10kb" }));
@@ -23,11 +31,15 @@ app.set("x-powered-by", false); //Remove header advertising usage of express for
 // app.use(morgan("dev")) //TODO: Replace with a more robust logging solution for production (e.g., Winston, Bunyan) and configure log levels, formats, and transports
 
 //response wrapper middleware
-
+app.use(responseWrapper);
 //CSRF
 
 //Routes
 //db instance
+app.use((req, res, next) => {
+  req.db = db; //attached db connection to every request passing through, preventing multiple imports of db instance in every controller
+  next();
+});
 app.use("/api", router);
 
 //404 handler
