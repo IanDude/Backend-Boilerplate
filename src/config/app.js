@@ -4,6 +4,8 @@ import express from "express";
 import router from "../routes/router.js";
 import Database from "./database.js";
 import { responseWrapper } from "../middlewares/responseWrapper.js";
+import configurePassport from "./passport.jwt.config.js";
+import passport from "passport";
 // import cors from "cors";
 
 const app = express();
@@ -13,6 +15,8 @@ await db.initialize(); //initialize database connection by calling initialize me
 app.set("trust proxy", 1);
 
 //passport config
+configurePassport(db);
+app.use(passport.initialize());
 
 //req id middleware
 
