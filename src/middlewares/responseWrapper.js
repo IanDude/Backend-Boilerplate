@@ -1,3 +1,4 @@
+import logger from "../util/logger.js";
 import { success, error } from "../util/responses.js";
 
 export const responseWrapper = (req, res, next) => {
@@ -11,10 +12,21 @@ export const responseWrapper = (req, res, next) => {
   };
 
   res.sendError = (message, err, statusCode, code) => {
+    const errorObj = err instanceof Error ? err : new Error(err);
+    const finalStatus = statusCode || 400;
     if (typeof err === "number") {
       return error(res, message, null, err, code);
     }
-    return error(res, message, err || null, statusCode || 400, code);
+    // console.log("Log from Logger");
+    // console.log("Status Code:", statusCode);
+    logger.error("Request Error", {
+      route: req.originalUrl,
+      method: req.method,
+      status: finalStatus,
+      error: errorObj.stack,
+    });
+
+    return error(res, message, errorObj.message, finalStatus, code);
   };
 
   next();
