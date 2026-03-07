@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { catchAsync } from "../util/catchAsync.js";
 import { validateBody } from "../util/validation.js";
-import { registerSchema } from "../schemas/auth.schema.js";
-import { hashPassword } from "../util/passwordHelpers.js";
+import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+import { comparePassword, hashPassword } from "../util/passwordHelpers.js";
 import { generateToken } from "../util/tokenHelpers.js";
 
 const router = Router();
@@ -22,9 +22,10 @@ router.post(
     const { name, email, password } = req.body;
 
     const [existing] = await req.db.query("SELECT id FROM users WHERE email = ?", [email]);
+    // console.log(existing);
 
     if (existing && (existing.length !== 0 || existing.id)) {
-      res.sendError("Email is already taken, use a different one", null, 409, "DUPLICATE_ENTRY");
+      res.sendError("Email is already taken, use a different one", "Email already exists", 409, "DUPLICATE_ENTRY");
     }
 
     const { hashedPassword, salt } = await hashPassword(password);
@@ -36,16 +37,41 @@ router.post(
       salt: salt,
       status: "active",
     });
+    // console.log(result);
 
-    const token = generateToken({ id: result.id });
+    const token = generateToken(result.id);
 
-    res.sendSuccess(
-      "Registered Successfully!",
-      { user: { id: result.id, name: result.name, email: result.name }, token },
-      201,
-    );
+    res.sendSuccess("Registered Successfully!", { user: { id: result.insertId, name, email }, token }, 201);
 
     // res.sendSuccess("Registered!", { name, email, password }, 201);
+  }),
+);
+
+router.post(
+  "/login",
+  validateBody(loginSchema),
+  catchAsync(async (req, res) => {
+    const { email, password } = req.body;
+
+    const [user] = await req.db.query("SELECT id, email, password, salt, status FROM users WHERE email = ?", [email]);
+
+    if (!user) {
+      return res.sendError("No user found", "Account not found", 404, "USER_NOT_FOUND");
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password, user.salt);
+
+    if (!isPasswordValid) {
+      return res.sendError("Incorrect Password", "Invalid Credentials", 401, "INVALID_CREDENTIALS");
+    }
+
+    const token = generateToken(user.id);
+
+    res.sendSuccess(
+      "Logged In Successfully",
+      { user: { id: user.id, email: user.email, status: user.status }, token },
+      200,
+    );
   }),
 );
 
