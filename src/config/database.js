@@ -38,7 +38,7 @@ class Database {
   async query(sql, params = [], timeout = 30000) {
     try {
       const queryPromise = this.pool.query(sql, params);
-      const timeoutPromise = new Promise((resolve, reject) => {
+      const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error("Query timeout exceeded"));
         }, timeout);
