@@ -51,7 +51,11 @@ app.use((req, res, next) => {
 app.use("/api", router);
 
 //404 handler
+app.use((req, res) => {
+  res.sendError("Endpoint not found", `path: ${req.originalUrl} method: ${req.method}`, 404, "RESOURCE_NOT_FOUND");
+});
 
 //global error handler
 
 export default app;
+export { db };

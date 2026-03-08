@@ -18,6 +18,7 @@ async function startServer() {
     server.close(() => {
       console.log("HTTP server closed.");
       db.close();
+      console.log("DB Closed");
       process.exit(0);
     });
   });
