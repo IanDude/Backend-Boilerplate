@@ -75,4 +75,11 @@ router.post(
   }),
 );
 
+router.get(
+  "/me",
+  catchAsync(async (req, res) => {
+    res.status(200).json({ message: "Authorized!" });
+  }),
+);
+
 export default router;
