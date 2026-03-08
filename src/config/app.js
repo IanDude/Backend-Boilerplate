@@ -7,6 +7,7 @@ import { responseWrapper } from "../middlewares/responseWrapper.js";
 import configurePassport from "./passport.jwt.config.js";
 import passport from "passport";
 import requestLogger from "../middlewares/requestLogger.js";
+import requestIdMiddleware from "../middlewares/requestId.js";
 // import cors from "cors";
 
 const app = express();
@@ -20,6 +21,7 @@ configurePassport(db);
 app.use(passport.initialize());
 
 //req id middleware
+app.use(requestIdMiddleware);
 
 //Body parsers - best practice to use in parsing json and forms into objects
 app.use(express.json({ limit: "10kb" }));

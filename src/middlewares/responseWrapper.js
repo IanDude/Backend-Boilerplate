@@ -21,6 +21,7 @@ export const responseWrapper = (req, res, next) => {
     // console.log("Status Code:", statusCode);
     logger.error("Request Error", {
       route: req.originalUrl,
+      id: req.requestId,
       method: req.method,
       status: finalStatus,
       error: errorObj.stack,

@@ -12,6 +12,7 @@ const requestLogger = (req, res, next) => {
       route: req.originalUrl,
       status: res.statusCode,
       ip: req.ip,
+      id: req.requestId,
       duration: `${duration}ms`,
     });
   });

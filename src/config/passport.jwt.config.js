@@ -11,7 +11,7 @@ const configurePassport = (db) => {
   const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: publicKey,
-    algorithms: ["RS256"],
+    algorithm: "RS256",
   };
 
   passport.use(
