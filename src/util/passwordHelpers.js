@@ -1,5 +1,6 @@
 import argon2 from "argon2";
 import crypto from "node:crypto";
+import APIError from "./APIError.js";
 
 export const hashPassword = async (password) => {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -12,8 +13,10 @@ export const hashPassword = async (password) => {
       parallelism: 1,
     });
     return { hashedPassword, salt };
+    // throw Error();
   } catch (error) {
-    console.error("Error in hashing: ", error);
+    throw new APIError("An error occured while generating new hash password", 500);
+    // console.error("Error in hashing: ", error);
   }
 };
 

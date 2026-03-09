@@ -6,6 +6,7 @@ import Database from "./database.js";
 import { responseWrapper } from "../middlewares/responseWrapper.js";
 import configurePassport from "./passport.jwt.config.js";
 import passport from "passport";
+import globalErrorHandler from "../util/APIError.js";
 import requestLogger from "../middlewares/requestLogger.js";
 import requestIdMiddleware from "../middlewares/requestId.js";
 // import cors from "cors";
@@ -56,6 +57,7 @@ app.use((req, res) => {
 });
 
 //global error handler
+app.use(globalErrorHandler);
 
 export default app;
 export { db };
