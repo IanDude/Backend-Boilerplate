@@ -78,7 +78,10 @@ router.post(
 router.get(
   "/me",
   catchAsync(async (req, res) => {
-    res.status(200).json({ message: "Authorized!" });
+    const { created_at } = req.user;
+    const formattedDate = new Date(created_at).toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+    req.user.created_at = formattedDate;
+    res.status(200).json(req.user);
   }),
 );
 
