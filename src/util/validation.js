@@ -33,7 +33,7 @@ export const validateBody = (schema) => {
         });
 
         try {
-          return res.status(400).json({
+          return res.status(422).json({
             success: false,
             message: "Validation failed",
             errors: errorList.map((err) => ({
@@ -50,7 +50,7 @@ export const validateBody = (schema) => {
           });
         }
 
-        res.status(400).json({
+        res.status(422).json({
           success: false,
           message: "Validation failed",
           errors: errorList,
@@ -72,7 +72,7 @@ export const validateQuery = (schema) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorList = error.issues || error.errors || [];
-        return res.status(400).json({
+        return res.status(422).json({
           success: false,
           message: "Invalid query parameters",
           errors: errorList.map((err) => ({
@@ -98,14 +98,14 @@ export const validateParams = (schema) => {
       if (error instanceof z.ZodError) {
         if (!Array.isArray(error.errors)) {
           console.error("ZodError.errors is not an array:", error);
-          return res.status(400).json({
+          return res.status(422).json({
             success: false,
             message: "Invalid parameters",
             errors: [],
           });
         }
 
-        res.status(400).json({
+        res.status(422).json({
           success: false,
           message: "Invalid parameters",
           errors: error.errors.map((err) => ({
