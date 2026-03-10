@@ -2,6 +2,7 @@
  * file for using express and run it on the server itself */
 import express from "express";
 import router from "../routes/router.js";
+import cookieParser from "cookie-parser";
 import Database from "./database.js";
 import { responseWrapper } from "../middlewares/responseWrapper.js";
 import configurePassport from "./passport.jwt.config.js";
@@ -9,6 +10,7 @@ import passport from "passport";
 import globalErrorHandler from "../util/APIError.js";
 import requestLogger from "../middlewares/requestLogger.js";
 import requestIdMiddleware from "../middlewares/requestId.js";
+import { csrfErrorHandler, csrfProtection, csrfTokenHandler, validateOrigin } from "../middlewares/csrf.js";
 // import cors from "cors";
 
 const app = express();
@@ -26,6 +28,7 @@ app.use(requestIdMiddleware);
 
 //Body parsers - best practice to use in parsing json and forms into objects
 app.use(express.json({ limit: "10kb" }));
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 //Misc server settings
@@ -42,7 +45,9 @@ app.use(requestLogger);
 //response wrapper middleware
 app.use(responseWrapper);
 //CSRF
-
+app.use(validateOrigin);
+app.use(csrfProtection);
+app.get("/api/csrf-token", csrfTokenHandler);
 //Routes
 //db instance
 app.use((req, res, next) => {
@@ -57,6 +62,7 @@ app.use((req, res) => {
 });
 
 //global error handler
+app.use(csrfErrorHandler);
 app.use(globalErrorHandler);
 
 export default app;
