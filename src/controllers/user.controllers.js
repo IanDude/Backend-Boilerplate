@@ -11,8 +11,8 @@ router.get(
   "/",
   catchAsync(async (req, res) => {
     const users = await req.db.query("SELECT id, name, email, status, created_at FROM users");
-    console.log(users);
-    res.sendSuccess("Success", users);
+    // console.log(users);
+    res.sendSuccess("Success", users, 200);
     // res.status(200).json({ message: "Should be all users" });
   }),
 );
@@ -23,8 +23,9 @@ router.get(
   validateParams(methodByIdSchema),
   catchAsync(async (req, res) => {
     const { id } = req.params;
-    const [user] = await req.db.query("SELECT id, name, email, status, created_at FROM users WHERE id = ?", [id]);
-    if (user.affectedRows === 0) {
+    const user = await req.db.query("SELECT id, name, email, status, created_at FROM users WHERE id = ?", [id]);
+
+    if (user.length === 0) {
       return res.sendError("No User found", "User Not Found", 404, "USER_NOT_FOUND");
     }
 
@@ -54,7 +55,6 @@ router.post(
     if (result.affectedRows === 0) {
       return res.sendError("Failed to create user", 400);
     }
-    console.log(result);
 
     res.sendSuccess("User created successfully", { id: result.insertId, name, email, status: newUser.status }, 201);
   }),
@@ -131,7 +131,6 @@ router.delete(
   catchAsync(async (req, res) => {
     const { id } = req.params;
     const result = await req.db.query("DELETE FROM users WHERE id = ?", [id]);
-
     if (result.affectedRows === 0) {
       return res.sendError("User does not exist.", "User Not Found", 404, "USER_NOT_FOUND");
     }
