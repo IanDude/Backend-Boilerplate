@@ -13,6 +13,7 @@ import requestLogger from "../middlewares/requestLogger.js";
 import requestIdMiddleware from "../middlewares/requestId.js";
 import { csrfErrorHandler, csrfProtection, csrfTokenHandler, validateOrigin } from "../middlewares/csrf.js";
 import { corsConfig } from "../middlewares/corsMiddleware.js";
+import { globalLimiter } from "../middlewares/rateLimiters.js";
 // import cors from "cors";
 
 const app = express();
@@ -42,11 +43,16 @@ app.set("x-powered-by", false); //Remove header advertising usage of express for
 // app.use(cors()); //TODO: Enhance CORS configuration for production use (restrict origins, methods, etc.)
 app.use(helmet());
 app.use(corsConfig);
+
 // app.use(morgan("dev")) //TODO: Replace with a more robust logging solution for production (e.g., Winston, Bunyan) and configure log levels, formats, and transports
 app.use(requestLogger);
 
 //response wrapper middleware
 app.use(responseWrapper);
+
+//Ratelimiter
+app.use(globalLimiter);
+
 //CSRF
 app.use(validateOrigin);
 app.use(csrfProtection);
