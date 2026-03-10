@@ -59,3 +59,62 @@ export const validateBody = (schema) => {
     }
   };
 };
+
+export const validateQuery = (schema) => {
+  return async (req, res, next) => {
+    try {
+      const parsed = schema.parse(req.query);
+      req.validatedQuery = parsed;
+      Object.keys(parsed).forEach((key) => {
+        req.query[key] = parsed[key];
+      });
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorList = error.issues || error.errors || [];
+        return res.status(400).json({
+          success: false,
+          message: "Invalid query parameters",
+          errors: errorList.map((err) => ({
+            field: err.path.join("."),
+            message: err.message,
+          })),
+        });
+      }
+      next(error);
+    }
+  };
+};
+
+export const validateParams = (schema) => {
+  return async (req, res, next) => {
+    try {
+      if (process.env.NODE_ENV === "development") {
+        console.log("validateParams - Request Params:", JSON.stringify(req.params, null, 2));
+      }
+      req.params = schema.parse(req.params);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        if (!Array.isArray(error.errors)) {
+          console.error("ZodError.errors is not an array:", error);
+          return res.status(400).json({
+            success: false,
+            message: "Invalid parameters",
+            errors: [],
+          });
+        }
+
+        res.status(400).json({
+          success: false,
+          message: "Invalid parameters",
+          errors: error.errors.map((err) => ({
+            field: err.path.join("."),
+            message: err.message,
+          })),
+        });
+      }
+      next(error);
+    }
+  };
+};
