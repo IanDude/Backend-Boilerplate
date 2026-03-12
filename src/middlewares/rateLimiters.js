@@ -1,4 +1,5 @@
 import { rateLimit } from "express-rate-limit";
+import { ERROR_CODES } from "../util/APIError.js";
 
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, //15 Minutes
@@ -7,7 +8,7 @@ export const globalLimiter = rateLimit({
   legacyHeaders: false,
   ipv6Subnet: 56,
   handler: (req, res) => {
-    res.sendError("Number of requests exceeds limit, try again later", null, 429, "RATE_LIMIT_EXCEEDED");
+    res.sendError("Number of requests exceeds limit, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
   },
 });
 
@@ -18,7 +19,7 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
   ipv6Subnet: 56,
   handler: (req, res) => {
-    res.sendError("Too many login attempts, please try again later.", null, 429, "RATE_LIMIT_EXCEEDED");
+    res.sendError("Too many login attempts, please try again later.", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
   },
 });
 
@@ -29,7 +30,7 @@ export const registerLimiter = rateLimit({
   legacyHeaders: false,
   ipv6Subnet: 56,
   handler: (req, res) => {
-    res.sendError("Too many accounts created, try again later", null, 429, "RATE_LIMIT_EXCEEDED");
+    res.sendError("Too many accounts created, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
   },
 });
 
@@ -40,6 +41,6 @@ export const usersRouteLimiter = rateLimit({
   legacyHeaders: false,
   ipv6Subnet: 56,
   handler: (req, res) => {
-    res.sendError("Too many user requests, try again later", null, 429, "RATE_LIMIT_EXCEEDED");
+    res.sendError("Too many user requests, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
   },
 });

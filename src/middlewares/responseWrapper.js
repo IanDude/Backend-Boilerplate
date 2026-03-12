@@ -1,4 +1,3 @@
-import logger from "../util/logger.js";
 import { success, error } from "../util/responses.js";
 
 export const responseWrapper = (req, res, next) => {

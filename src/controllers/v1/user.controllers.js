@@ -4,6 +4,7 @@ import { validateBody, validateParams } from "../../util/validation.js";
 import { methodByIdSchema, newUserSchema } from "../../schemas/user.schema.js";
 import { hashPassword } from "../../util/passwordHelpers.js";
 import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
+import { ERROR_CODES } from "../../util/APIError.js";
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.get(
     const user = await req.db.query("SELECT id, name, email, status, created_at FROM users WHERE id = ?", [id]);
 
     if (user.length === 0) {
-      return res.sendError("No User found", "User Not Found", 404, "USER_NOT_FOUND");
+      return res.sendError("No User found", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
     }
 
     res.sendSuccess("User Found", user, 200);
@@ -43,7 +44,12 @@ router.post(
     const { name, email, status, password } = req.body;
     const [userExist] = await req.db.query("SELECT id FROM users WHERE email = ?", [email]);
     if (userExist && (userExist.length > 0 || userExist.id)) {
-      return res.sendError("Email is already taken, use a different one", "Duplicate Email", 409, "DUPLICATE_ENTRY");
+      return res.sendError(
+        "Email is already taken, use a different one",
+        "Duplicate Email",
+        409,
+        ERROR_CODES.DUPLICATE_ENTRY,
+      );
     }
     const { hashedPassword, salt } = await hashPassword(password);
     const newUser = {
@@ -73,7 +79,12 @@ router.post(
       const { name, email, password } = req.body;
       const [userExist] = await connection.query("SELECT id FROM users WHERE email = ?", [email]);
       if (userExist && (userExist.length > 0 || userExist.id)) {
-        return res.sendError("Email is already taken, use a different one", "Duplicate Email", 409, "DUPLICATE_ENTRY");
+        return res.sendError(
+          "Email is already taken, use a different one",
+          "Duplicate Email",
+          409,
+          ERROR_CODES.DUPLICATE_ENTRY,
+        );
       }
       const { hashedPassword, salt } = await hashPassword(password);
       const newUser = {
@@ -86,12 +97,12 @@ router.post(
       const [insertResult] = await connection.query("INSERT INTO users SET ?", newUser);
       // console.log(insertResult);
       if (insertResult.affectedRows === 0) {
-        return res.sendError("Failed to create new user", "Register Error", 400, "");
+        return res.sendError("Failed to create new user", "Register Error", 400, ERROR_CODES.DATABASE_ERROR);
       }
       const newUserId = insertResult.insertId;
       const verifiedUser = connection.query("UPDATE users SET status = 'verified' WHERE id = ? ", [newUserId]);
       if (verifiedUser && (verifiedUser.length > 0 || verifiedUser.affectedRows === 0)) {
-        return res.sendError("Failed to verify user", "Verification Failed", 500, "INTERNAL_ERROR");
+        return res.sendError("Failed to verify user", "Verification Failed", 500, ERROR_CODES.INTERNAL_ERROR);
       }
       await req.db.commit(connection);
 
@@ -119,7 +130,7 @@ router.put(
     const result = await req.db.query("UPDATE users SET ? WHERE id = ?", [{ name, email, status }, id]);
 
     if (result.affectedRows === 0) {
-      return res.sendError("User does not exist", "User Not Found", 404, "USER_NOT_FOUND");
+      return res.sendError("User does not exist", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
     }
 
     res.sendSuccess("User updated successfully", null, 200);
@@ -135,7 +146,7 @@ router.delete(
     const { id } = req.params;
     const result = await req.db.query("DELETE FROM users WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
-      return res.sendError("User does not exist.", "User Not Found", 404, "USER_NOT_FOUND");
+      return res.sendError("User does not exist.", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
     }
 
     res.sendSuccess("User deleted successfully", null, 200);

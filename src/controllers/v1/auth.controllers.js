@@ -6,6 +6,7 @@ import { comparePassword, hashPassword } from "../../util/passwordHelpers.js";
 import { generateToken } from "../../util/tokenHelpers.js";
 import { loginLimiter, registerLimiter } from "../../middlewares/rateLimiters.js";
 import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
+import { ERROR_CODES } from "../../util/APIError.js";
 
 const router = Router();
 
@@ -29,7 +30,12 @@ router.post(
     // console.log(existing);
 
     if (existing && (existing.length !== 0 || existing.id)) {
-      res.sendError("Email is already taken, use a different one", "Email already exists", 409, "DUPLICATE_ENTRY");
+      res.sendError(
+        "Email is already taken, use a different one",
+        "Email already exists",
+        409,
+        ERROR_CODES.DUPLICATE_ENTRY,
+      );
     }
 
     const { hashedPassword, salt } = await hashPassword(password);
@@ -61,13 +67,13 @@ router.post(
     const [user] = await req.db.query("SELECT id, email, password, salt, status FROM users WHERE email = ?", [email]);
 
     if (!user) {
-      return res.sendError("No user found", "Account not found", 404, "USER_NOT_FOUND");
+      return res.sendError("No user found", "Account not found", 404, ERROR_CODES.USER_NOT_FOUND);
     }
 
     const isPasswordValid = await comparePassword(password, user.password, user.salt);
 
     if (!isPasswordValid) {
-      return res.sendError("Incorrect Password", "Invalid Credentials", 401, "INVALID_CREDENTIALS");
+      return res.sendError("Incorrect Password", "Invalid Credentials", 401, ERROR_CODES.INVALID_CREDENTIALS);
     }
 
     const token = generateToken(user.id);

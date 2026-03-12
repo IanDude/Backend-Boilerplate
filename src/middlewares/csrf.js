@@ -1,6 +1,6 @@
 import { doubleCsrf } from "csrf-csrf";
 import crypto from "node:crypto";
-import APIError from "../util/APIError.js";
+import APIError, { ERROR_CODES } from "../util/APIError.js";
 
 const csrfSecret = process.env.CSRF_SECRET;
 
@@ -114,7 +114,7 @@ const { generateCsrfToken: generateToken, doubleCsrfProtection } = doubleCsrf({
 const isCsrfDisabled = process.env.DISABLE_CSRF === "true";
 export const csrfProtection = (req, res, next) => {
   if (isProduction && isCsrfDisabled) {
-    throw new APIError("CSRF protection cannot be disabled in production", 500, "CSRF_PROTECTION_ERROR");
+    throw new APIError("CSRF protection cannot be disabled in production", 500, ERROR_CODES.CSRF_PROTECTION_ERROR);
   }
 
   if (!isProduction && isCsrfDisabled) {
@@ -208,7 +208,12 @@ export const csrfErrorHandler = (err, req, res, next) => {
     console.log("Sending 403 CSRF error response...");
 
     try {
-      res.sendError("Invalid or expired CSRF token. Please refresh and try again.", null, 403, "CSRF_VALIDATION_ERROR");
+      res.sendError(
+        "Invalid or expired CSRF token. Please refresh and try again.",
+        null,
+        403,
+        ERROR_CODES.CSRF_VALIDATION_ERROR,
+      );
       console.log("403 response sent successfully");
     } catch (repsonseError) {
       console.error("ERROR: Failed to send 403 response:", repsonseError);
@@ -276,7 +281,7 @@ export const validateOrigin = (req, res, next) => {
         method: req.method,
         url: req.originalUrl,
       });
-      return res.sendError("Origin validation not configured", null, 403, "ORIGIN_CONFIG_ERROR");
+      return res.sendError("Origin validation not configured", null, 403, ERROR_CODES.ORIGIN_CONFIG_ERROR);
     }
   }
 
@@ -318,7 +323,7 @@ export const validateOrigin = (req, res, next) => {
       return next();
     }
 
-    return res.sendError("Request origin validation failed", null, 403, "MISSING_ORIGIN");
+    return res.sendError("Request origin validation failed", null, 403, ERROR_CODES.MISSING_ORIGIN);
   }
 
   // Allow Chrome extensions and browser extensions in development
@@ -365,7 +370,7 @@ export const validateOrigin = (req, res, next) => {
           ? `Origin '${origin}' not allowed. Allowed origins: ${allowedOrigins.join(", ")}`
           : "Request origin not allowed";
 
-      return res.sendError(message, null, 403, "INVALID_ORIGIN");
+      return res.sendError(message, null, 403, ERROR_CODES.INVALID_ORIGIN);
     }
 
     next();
@@ -375,6 +380,6 @@ export const validateOrigin = (req, res, next) => {
       error: error.message,
     });
 
-    return res.sendError("Invalid request origin", null, 403, "INVALID_ORIGIN");
+    return res.sendError("Invalid request origin", null, 403, ERROR_CODES.INVALID_ORIGIN);
   }
 };
