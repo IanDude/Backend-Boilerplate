@@ -14,6 +14,7 @@ import requestIdMiddleware from "../middlewares/requestId.js";
 import { csrfErrorHandler, csrfProtection, csrfTokenHandler, validateOrigin } from "../middlewares/csrf.js";
 import { corsConfig } from "../middlewares/corsMiddleware.js";
 import { globalLimiter } from "../middlewares/rateLimiters.js";
+import logger from "../util/logger.js";
 // import cors from "cors";
 
 const app = express();
@@ -61,6 +62,11 @@ app.get("/api/csrf-token", csrfTokenHandler);
 //db instance
 app.use((req, res, next) => {
   req.db = db; //attached db connection to every request passing through, preventing multiple imports of db instance in every controller
+  next();
+});
+//logger instance
+app.use((req, res, next) => {
+  req.logger = logger;
   next();
 });
 app.use("/api", router);

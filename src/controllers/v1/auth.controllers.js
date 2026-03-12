@@ -5,6 +5,7 @@ import { loginSchema, registerSchema } from "../../schemas/auth.schema.js";
 import { comparePassword, hashPassword } from "../../util/passwordHelpers.js";
 import { generateToken } from "../../util/tokenHelpers.js";
 import { loginLimiter, registerLimiter } from "../../middlewares/rateLimiters.js";
+import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.post(
   "/register",
   registerLimiter,
   validateBody(registerSchema),
+  idempotencyMiddleware(),
   catchAsync(async (req, res) => {
     const { name, email, password } = req.body;
 

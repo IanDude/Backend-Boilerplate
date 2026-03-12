@@ -3,6 +3,7 @@ import { catchAsync } from "../../util/catchAsync.js";
 import { validateBody, validateParams } from "../../util/validation.js";
 import { methodByIdSchema, newUserSchema } from "../../schemas/user.schema.js";
 import { hashPassword } from "../../util/passwordHelpers.js";
+import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
 
 const router = Router();
 
@@ -37,6 +38,7 @@ router.get(
 router.post(
   "/",
   validateBody(newUserSchema),
+  idempotencyMiddleware(),
   catchAsync(async (req, res) => {
     const { name, email, status, password } = req.body;
     const [userExist] = await req.db.query("SELECT id FROM users WHERE email = ?", [email]);
@@ -51,7 +53,7 @@ router.post(
       status: status || "active",
       salt: salt,
     };
-    const result = await req.db.query("INSERT INTO users SET ?", [newUser]);
+    const result = await req.db.query("INSERT INTO users SET ?", newUser);
     if (result.affectedRows === 0) {
       return res.sendError("Failed to create user", 400);
     }
@@ -64,6 +66,7 @@ router.post(
 router.post(
   "/register",
   validateBody(newUserSchema),
+  idempotencyMiddleware(),
   catchAsync(async (req, res) => {
     const connection = await req.db.beginTransaction();
     try {
@@ -80,8 +83,8 @@ router.post(
         status: "pending",
         salt: salt,
       };
-      const [insertResult] = await connection.query("INSERT INTO users SET ?", [newUser]);
-      console.log(insertResult);
+      const [insertResult] = await connection.query("INSERT INTO users SET ?", newUser);
+      // console.log(insertResult);
       if (insertResult.affectedRows === 0) {
         return res.sendError("Failed to create new user", "Register Error", 400, "");
       }
