@@ -67,6 +67,7 @@ app.use((req, res, next) => {
 //logger instance
 app.use((req, res, next) => {
   req.logger = logger;
+  res.logger = logger;
   next();
 });
 app.use("/api", router);

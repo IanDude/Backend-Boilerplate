@@ -7,7 +7,7 @@ const requestLogger = (req, res, next) => {
     const duration = Date.now() - startTime;
     // console.log(res);
     const isError = res.statusCode >= 400 ? "Error" : "Request";
-    logger.http(`HTTP ${isError}`, {
+    res.logger.http(`HTTP ${isError}`, {
       method: req.method,
       route: req.originalUrl,
       status: res.statusCode,

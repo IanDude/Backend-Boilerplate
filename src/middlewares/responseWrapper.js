@@ -4,11 +4,20 @@ import { success, error } from "../util/responses.js";
 export const responseWrapper = (req, res, next) => {
   //create a method for sending consistent response structures
   res.sendSuccess = (message, data, statusCode) => {
+    const finalStatus = statusCode || 200;
     if (typeof data === "number") {
       //checks if data is a number and treats it as a status code
       return success(res, message, null, data);
     }
-    return success(res, message, data || null, statusCode || 200);
+
+    res.logger.info("Request Success", {
+      route: req.originalUrl,
+      id: req.requestId,
+      method: req.method,
+      status: finalStatus,
+    });
+
+    return success(res, message, data || null, finalStatus);
   };
 
   res.sendError = (message, err, statusCode, code) => {
@@ -19,7 +28,7 @@ export const responseWrapper = (req, res, next) => {
     }
     // console.log("Log from Logger");
     // console.log("Status Code:", statusCode);
-    logger.error("Request Error", {
+    res.logger.error("Request Error", {
       route: req.originalUrl,
       id: req.requestId,
       method: req.method,
