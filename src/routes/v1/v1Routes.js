@@ -1,6 +1,6 @@
 import { Router } from "express";
-import authRouter from "../../controllers/auth.controllers.js";
-import userRouter from "../../controllers/user.controllers.js";
+import authRouter from "../../controllers/v1/auth.controllers.js";
+import userRouter from "../../controllers/v1/user.controllers.js";
 import { authenticate } from "../../middlewares/authenticate.js";
 import { usersRouteLimiter } from "../../middlewares/rateLimiters.js";
 

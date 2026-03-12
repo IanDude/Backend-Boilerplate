@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { catchAsync } from "../util/catchAsync.js";
-import { validateBody } from "../util/validation.js";
-import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
-import { comparePassword, hashPassword } from "../util/passwordHelpers.js";
-import { generateToken } from "../util/tokenHelpers.js";
-import { loginLimiter, registerLimiter } from "../middlewares/rateLimiters.js";
+import { catchAsync } from "../../util/catchAsync.js";
+import { validateBody } from "../../util/validation.js";
+import { loginSchema, registerSchema } from "../../schemas/auth.schema.js";
+import { comparePassword, hashPassword } from "../../util/passwordHelpers.js";
+import { generateToken } from "../../util/tokenHelpers.js";
+import { loginLimiter, registerLimiter } from "../../middlewares/rateLimiters.js";
 
 const router = Router();
 
