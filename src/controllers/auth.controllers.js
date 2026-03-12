@@ -4,7 +4,7 @@ import { validateBody } from "../util/validation.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 import { comparePassword, hashPassword } from "../util/passwordHelpers.js";
 import { generateToken } from "../util/tokenHelpers.js";
-import { authLimiter, registerLimiter } from "../middlewares/rateLimiters.js";
+import { loginLimiter, registerLimiter } from "../middlewares/rateLimiters.js";
 
 const router = Router();
 
@@ -51,7 +51,7 @@ router.post(
 
 router.post(
   "/login",
-  authLimiter,
+  loginLimiter,
   validateBody(loginSchema),
   catchAsync(async (req, res) => {
     const { email, password } = req.body;

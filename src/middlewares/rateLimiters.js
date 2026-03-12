@@ -11,7 +11,7 @@ export const globalLimiter = rateLimit({
   },
 });
 
-export const authLimiter = rateLimit({
+export const loginLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, //10 minutes
   limit: 10,
   standardHeaders: "draft-8",
