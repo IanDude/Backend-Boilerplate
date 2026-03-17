@@ -7,4 +7,6 @@ logs
 /keys
 *.key
 
+public
+
 package-lock.json

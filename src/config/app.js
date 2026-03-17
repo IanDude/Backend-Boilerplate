@@ -15,6 +15,7 @@ import { csrfErrorHandler, csrfProtection, csrfTokenHandler, validateOrigin } fr
 import { corsConfig } from "../middlewares/corsMiddleware.js";
 import { globalLimiter } from "../middlewares/rateLimiters.js";
 import logger from "../util/logger.js";
+import { globalUploadErrorHandler } from "../util/file/unlink.js";
 // import cors from "cors";
 
 const app = express();
@@ -45,6 +46,13 @@ app.set("x-powered-by", false); //Remove header advertising usage of express for
 app.use(helmet());
 app.use(corsConfig);
 
+//logger instance
+app.use((req, res, next) => {
+  req.logger = logger;
+  res.logger = logger;
+  next();
+});
+
 // app.use(morgan("dev")) //TODO: Replace with a more robust logging solution for production (e.g., Winston, Bunyan) and configure log levels, formats, and transports
 app.use(requestLogger);
 
@@ -64,12 +72,7 @@ app.use((req, res, next) => {
   req.db = db; //attached db connection to every request passing through, preventing multiple imports of db instance in every controller
   next();
 });
-//logger instance
-app.use((req, res, next) => {
-  req.logger = logger;
-  res.logger = logger;
-  next();
-});
+
 app.use("/api", router);
 
 //404 handler
@@ -79,6 +82,7 @@ app.use((req, res) => {
 
 //global error handler
 app.use(csrfErrorHandler);
+app.use(globalUploadErrorHandler);
 app.use(globalErrorHandler);
 
 export default app;
