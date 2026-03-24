@@ -1,11 +1,18 @@
 import { z } from "zod";
 
-export const methodByIdSchema = z.object({
-  id: z.coerce.number().int().positive(),
+export const UserIdParamSchema = z.object({
+  userId: z.string(),
 });
 
 export const newUserSchema = z.object({
-  name: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   email: z.email(),
   password: z.string().min(6),
+});
+
+export const updateUserSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.email(),
 });
