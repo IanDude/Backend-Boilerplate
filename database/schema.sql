@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     salt VARCHAR(255),
     status VARCHAR(50) DEFAULT 'active',
+    avatar_path VARCHAR(255),
+    gallery_path LONGTEXT(65535),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     -- Add a unique constraint on email
