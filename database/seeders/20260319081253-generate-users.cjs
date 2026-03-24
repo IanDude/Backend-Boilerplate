@@ -1,5 +1,5 @@
 "use strict";
-const { randomUUID } = require("crypto");
+const { v4: uuidv4 } = require("uuid");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
     const now = new Date();
     await queryInterface.bulkInsert("users", [
       {
-        user_id: randomUUID(),
+        user_id: uuidv4(),
         first_name: "Ian",
         last_name: "Dudley",
         email: "iandudley@email.com",
@@ -26,7 +26,7 @@ module.exports = {
         updated_at: now,
       },
       {
-        user_id: randomUUID(),
+        user_id: uuidv4(),
         first_name: "Ian",
         last_name: "Dude",
         email: "iandude@email.com",
@@ -36,7 +36,7 @@ module.exports = {
         updated_at: now,
       },
       {
-        user_id: randomUUID(),
+        user_id: uuidv4(),
         first_name: "John",
         last_name: "Adams",
         email: "johnadams@email.com",
@@ -46,7 +46,7 @@ module.exports = {
         updated_at: now,
       },
       {
-        user_id: randomUUID(),
+        user_id: uuidv4(),
         first_name: "Hugh",
         last_name: "Campbell",
         email: "hughcampbell@email.com",
@@ -56,7 +56,7 @@ module.exports = {
         updated_at: now,
       },
       {
-        user_id: randomUUID(),
+        user_id: uuidv4(),
         first_name: "Annie",
         last_name: "January",
         email: "anniejanuary@email.com",

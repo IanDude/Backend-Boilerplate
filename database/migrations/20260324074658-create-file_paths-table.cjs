@@ -9,41 +9,36 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.createTable("users", {
+
+    await queryInterface.createTable("file_paths", {
       id: {
         type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
         allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
       },
       user_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
+      file_id: {
         type: Sequelize.CHAR(36),
         allowNull: false,
         unique: true,
       },
-      first_name: {
+      file_name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      last_name: {
-        type: Sequelize.STRING,
+      destination: {
+        type: Sequelize.STRING(),
         allowNull: false,
-      },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      status: {
-        type: Sequelize.STRING,
-        defaultValue: "active",
-      },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      salt: {
-        type: Sequelize.STRING,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -66,6 +61,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("file_paths");
   },
 };
