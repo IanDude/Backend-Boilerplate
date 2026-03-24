@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { catchAsync } from "../../util/catchAsync.js";
 import { validateBody, validateParams } from "../../util/validation.js";
-import { methodByIdSchema, newUserSchema } from "../../schemas/user.schema.js";
+import { UserIdParamSchema, newUserSchema, updateUserSchema } from "../../schemas/user.schema.js";
 import { hashPassword } from "../../util/passwordHelpers.js";
 import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
-import { ERROR_CODES } from "../../util/APIError.js";
+import APIError, { ERROR_CODES } from "../../util/APIError.js";
+import generateUUID from "../../util/generateUUID.js";
 
 const router = Router();
 
@@ -12,7 +13,9 @@ const router = Router();
 router.get(
   "/",
   catchAsync(async (req, res) => {
-    const users = await req.db.query("SELECT id, name, email, status, created_at FROM users");
+    const users = await req.db.query(
+      "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users",
+    );
     // console.log(users);
     res.sendSuccess("Success", users, 200);
     // res.status(200).json({ message: "Should be all users" });
@@ -21,11 +24,14 @@ router.get(
 
 //GET /users/:id - Get a user by ID
 router.get(
-  "/:id",
-  validateParams(methodByIdSchema),
+  "/:userId",
+  validateParams(UserIdParamSchema),
   catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const user = await req.db.query("SELECT id, name, email, status, created_at FROM users WHERE id = ?", [id]);
+    const { userId } = req.params;
+    const [user] = await req.db.query(
+      "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users WHERE user_id = ?",
+      [userId],
+    );
 
     if (user.length === 0) {
       return res.sendError("No User found", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
@@ -39,10 +45,10 @@ router.get(
 router.post(
   "/",
   validateBody(newUserSchema),
-  idempotencyMiddleware(),
   catchAsync(async (req, res) => {
-    const { name, email, status, password } = req.body;
-    const [userExist] = await req.db.query("SELECT id FROM users WHERE email = ?", [email]);
+    const { firstName, lastName, email, status, password } = req.body;
+    const userExist = await req.db.query("SELECT user_id FROM users WHERE email = ?", [email]);
+
     if (userExist && (userExist.length > 0 || userExist.id)) {
       return res.sendError(
         "Email is already taken, use a different one",
@@ -52,19 +58,24 @@ router.post(
       );
     }
     const { hashedPassword, salt } = await hashPassword(password);
+
     const newUser = {
-      name,
+      user_id: generateUUID(),
+      first_name: firstName,
+      last_name: lastName,
       email,
       password: hashedPassword,
       status: status || "active",
       salt: salt,
     };
+
     const result = await req.db.query("INSERT INTO users SET ?", newUser);
+
     if (result.affectedRows === 0) {
       return res.sendError("Failed to create user", 400);
     }
 
-    res.sendSuccess("User created successfully", { id: result.insertId, name, email, status: newUser.status }, 201);
+    res.sendSuccess("User created successfully", 201);
   }),
 );
 
@@ -72,13 +83,13 @@ router.post(
 router.post(
   "/register",
   validateBody(newUserSchema),
-  idempotencyMiddleware(),
-  catchAsync(async (req, res) => {
+  catchAsync(async (req, res, next) => {
     const connection = await req.db.beginTransaction();
     try {
-      const { name, email, password } = req.body;
-      const [userExist] = await connection.query("SELECT id FROM users WHERE email = ?", [email]);
-      if (userExist && (userExist.length > 0 || userExist.id)) {
+      const { firstName, lastName, email, password } = req.body;
+      const [userExist] = await connection.query("SELECT user_id FROM users WHERE email = ?", [email]);
+
+      if (userExist && (userExist.length > 0 || userExist.user_id)) {
         return res.sendError(
           "Email is already taken, use a different one",
           "Duplicate Email",
@@ -86,33 +97,34 @@ router.post(
           ERROR_CODES.DUPLICATE_ENTRY,
         );
       }
+
       const { hashedPassword, salt } = await hashPassword(password);
       const newUser = {
-        name,
+        user_id: generateUUID() ,
+        first_name: firstName,
+        last_name: lastName,
         email,
         password: hashedPassword,
         status: "pending",
         salt: salt,
       };
       const [insertResult] = await connection.query("INSERT INTO users SET ?", newUser);
-      // console.log(insertResult);
+
       if (insertResult.affectedRows === 0) {
-        return res.sendError("Failed to create new user", "Register Error", 400, ERROR_CODES.DATABASE_ERROR);
+        throw new Error("Failed to create new user");
       }
       const newUserId = insertResult.insertId;
-      const verifiedUser = connection.query("UPDATE users SET status = 'verified' WHERE id = ? ", [newUserId]);
+      const [verifiedUser] = await connection.query("UPDATE users SET status = 'verified' WHERE id = ? ", [newUserId]);
+
       if (verifiedUser && (verifiedUser.length > 0 || verifiedUser.affectedRows === 0)) {
-        return res.sendError("Failed to verify user", "Verification Failed", 500, ERROR_CODES.INTERNAL_ERROR);
+        throw new Error("Verification Failed");
       }
       await req.db.commit(connection);
 
-      res.sendSuccess(
-        "User created and verified successfully",
-        { id: newUserId, name, email, status: "verified" },
-        201,
-      );
+      res.sendSuccess("User created and verified successfully", 201);
     } catch (error) {
       await req.db.rollback(connection);
+      res.sendError(error);
       next(error);
     }
   }),
@@ -121,13 +133,17 @@ router.post(
 //PUT /users/:id - Update user by ID
 
 router.put(
-  "/:id",
-  validateParams(methodByIdSchema),
+  "/:userId",
+  validateParams(UserIdParamSchema),
+  validateBody(updateUserSchema),
   catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const { name, email, status } = req.body;
+    const { userId } = req.params;
+    const { firstName, lastName, email } = req.body;
 
-    const result = await req.db.query("UPDATE users SET ? WHERE id = ?", [{ name, email, status }, id]);
+    const result = await req.db.query("UPDATE users SET ? WHERE user_id = ?", [
+      { first_name: firstName, last_name: lastName, email },
+      userId,
+    ]);
 
     if (result.affectedRows === 0) {
       return res.sendError("User does not exist", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
@@ -140,11 +156,11 @@ router.put(
 //DELETE /users/:id
 
 router.delete(
-  "/:id",
-  validateParams(methodByIdSchema),
+  "/:userId",
+  validateParams(UserIdParamSchema),
   catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const result = await req.db.query("DELETE FROM users WHERE id = ?", [id]);
+    const { userId } = req.params;
+    const result = await req.db.query("DELETE FROM users WHERE user_id = ?", [userId]);
     if (result.affectedRows === 0) {
       return res.sendError("User does not exist.", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
     }

@@ -18,7 +18,7 @@ const configurePassport = (db) => {
     new jwtStrategy(options, async (jwt_payload, done) => {
       try {
         const [rows] = await db.query(
-          "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users where id = ?",
+          "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users where user_id = ?",
           [jwt_payload.userId],
         );
         const user = rows?.[0] ?? rows;
