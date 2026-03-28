@@ -14,7 +14,7 @@ router.get(
   "/",
   catchAsync(async (req, res) => {
     const users = await req.db.query(
-      "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users",
+      "SELECT id, user_uuid, first_name, last_name, email, status, created_at, updated_at FROM users",
     );
     // console.log(users);
     res.sendSuccess("Success", users, 200);
@@ -29,7 +29,7 @@ router.get(
   catchAsync(async (req, res) => {
     const { userId } = req.params;
     const [user] = await req.db.query(
-      "SELECT id, user_id, first_name, last_name, email, status, created_at, updated_at FROM users WHERE user_id = ?",
+      "SELECT id, user_uuid, first_name, last_name, email, status, created_at, updated_at FROM users WHERE user_uuid = ?",
       [userId],
     );
 
@@ -47,7 +47,7 @@ router.post(
   validateBody(newUserSchema),
   catchAsync(async (req, res) => {
     const { firstName, lastName, email, status, password } = req.body;
-    const userExist = await req.db.query("SELECT user_id FROM users WHERE email = ?", [email]);
+    const userExist = await req.db.query("SELECT user_uuid FROM users WHERE email = ?", [email]);
 
     if (userExist && (userExist.length > 0 || userExist.id)) {
       return res.sendError(
@@ -60,7 +60,7 @@ router.post(
     const { hashedPassword, salt } = await hashPassword(password);
 
     const newUser = {
-      user_id: generateUUID(),
+      user_uuid: generateUUID(),
       first_name: firstName,
       last_name: lastName,
       email,
@@ -87,9 +87,9 @@ router.post(
     const connection = await req.db.beginTransaction();
     try {
       const { firstName, lastName, email, password } = req.body;
-      const [userExist] = await connection.query("SELECT user_id FROM users WHERE email = ?", [email]);
+      const [userExist] = await connection.query("SELECT email FROM users WHERE email = ?", [email]);
 
-      if (userExist && (userExist.length > 0 || userExist.user_id)) {
+      if (userExist && (userExist.length > 0 || userExist.email)) {
         return res.sendError(
           "Email is already taken, use a different one",
           "Duplicate Email",
@@ -100,7 +100,7 @@ router.post(
 
       const { hashedPassword, salt } = await hashPassword(password);
       const newUser = {
-        user_id: generateUUID() ,
+        user_uuid: generateUUID(),
         first_name: firstName,
         last_name: lastName,
         email,
@@ -140,7 +140,7 @@ router.put(
     const { userId } = req.params;
     const { firstName, lastName, email } = req.body;
 
-    const result = await req.db.query("UPDATE users SET ? WHERE user_id = ?", [
+    const result = await req.db.query("UPDATE users SET ? WHERE user_uuid = ?", [
       { first_name: firstName, last_name: lastName, email },
       userId,
     ]);
@@ -160,7 +160,7 @@ router.delete(
   validateParams(UserIdParamSchema),
   catchAsync(async (req, res) => {
     const { userId } = req.params;
-    const result = await req.db.query("DELETE FROM users WHERE user_id = ?", [userId]);
+    const result = await req.db.query("DELETE FROM users WHERE user_uuid = ?", [userId]);
     if (result.affectedRows === 0) {
       return res.sendError("User does not exist.", "User Not Found", 404, ERROR_CODES.USER_NOT_FOUND);
     }

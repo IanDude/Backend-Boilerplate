@@ -31,7 +31,7 @@ router.post(
   catchAsync(async (req, res) => {
     const { email, password } = req.body;
 
-    const [user] = await req.db.query("SELECT user_id, email, password, salt, status FROM users WHERE email = ?", [
+    const [user] = await req.db.query("SELECT user_uuid, email, password, salt, status FROM users WHERE email = ?", [
       email,
     ]);
     // console.log(user);
@@ -45,11 +45,11 @@ router.post(
       return res.sendError("Incorrect Password", "Invalid Credentials", 401, ERROR_CODES.INVALID_CREDENTIALS);
     }
 
-    const token = generateToken(user.user_id);
+    const token = generateToken(user.user_uuid);
 
     res.sendSuccess(
       "Logged In Successfully",
-      { user: { userId: user.user_id, email: user.email, status: user.status }, token },
+      { user: { userId: user.user_uuid, email: user.email, status: user.status }, token },
       200,
     );
   }),
@@ -60,7 +60,7 @@ router.post(
   "/register",
   registerLimiter,
   validateBody(registerSchema),
-  idempotencyMiddleware(),
+  // idempotencyMiddleware(),
   catchAsync(async (req, res) => {
     const { firstName, lastName, email, password } = req.body;
 
@@ -78,7 +78,7 @@ router.post(
     const { hashedPassword, salt } = await hashPassword(password);
 
     await req.db.query("INSERT INTO users SET ?", {
-      user_id: generateUUID(),
+      user_uuid: generateUUID(),
       first_name: firstName,
       last_name: lastName,
       email,
