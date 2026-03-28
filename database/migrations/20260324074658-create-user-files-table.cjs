@@ -10,11 +10,15 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
 
-    await queryInterface.createTable("file_paths", {
-      id: {
+    await queryInterface.createTable("user_files", {
+      file_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        primaryKey: true,
         autoIncrement: true,
+      },
+      file_uuid: {
+        type: Sequelize.UUID,
         primaryKey: true,
       },
       user_id: {
@@ -27,29 +31,53 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      file_id: {
-        type: Sequelize.CHAR(36),
-        allowNull: false,
-        unique: true,
-      },
       file_name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      destination: {
-        type: Sequelize.STRING(),
+      original_name: {
+        type: Sequelize.STRING,
         allowNull: false,
+      },
+      file_path: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+      },
+      mime_type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      file_size: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      file_type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      category: {
+        type: Sequelize.ENUM("profile", "gallery", "document"),
+        allowNull: false,
+      },
+      is_public: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
+        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP()"),
+      },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
       },
     });
   },
@@ -61,6 +89,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("file_paths");
+    await queryInterface.dropTable("user_files");
   },
 };

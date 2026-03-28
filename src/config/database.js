@@ -21,6 +21,7 @@ class Database {
         idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || "60000"),
         connectionTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT || "10000"),
 
+        // timezone: "Z",
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
 

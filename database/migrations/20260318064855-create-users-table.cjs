@@ -16,8 +16,8 @@ module.exports = {
         autoIncrement: true,
         allowNull: false,
       },
-      user_id: {
-        type: Sequelize.CHAR(36),
+      user_uuid: {
+        type: Sequelize.UUID,
         allowNull: false,
         unique: true,
       },
@@ -48,13 +48,13 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
+        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP()"),
       },
     });
   },
