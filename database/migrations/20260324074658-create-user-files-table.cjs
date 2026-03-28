@@ -51,10 +51,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      file_type: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
       category: {
         type: Sequelize.ENUM("profile", "gallery", "document"),
         allowNull: false,
