@@ -1,7 +1,7 @@
 import passport from "passport";
 import { ERROR_CODES } from "../util/APIError.js";
 
-export const authenticate = (req, res, next) => {
+const authenticate = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {
     if (err) return next(err);
 
@@ -11,6 +11,9 @@ export const authenticate = (req, res, next) => {
     }
 
     req.user = user;
+    // console.log(user);
     next();
   })(req, res, next);
 };
+
+export default authenticate;
