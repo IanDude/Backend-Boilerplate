@@ -16,12 +16,14 @@ module.exports = {
       //User Module
       { name: "user:create", created_at: new Date() }, // 1
       { name: "user:view", created_at: new Date() }, // 2
-      { name: "user:view_all", created_at: new Date() }, // 3
-      { name: "user:update", created_at: new Date() }, // 4
-      { name: "user:update_any", created_at: new Date() }, // 5
-      { name: "user:delete", created_at: new Date() }, // 6
-      { name: "user:delete_any", created_at: new Date() }, // 7
-      { name: "user:manage_roles", created_at: new Date() }, // 8
+      { name: "user:view_any", created_at: new Date()}, // 3
+      { name: "user:view_all", created_at: new Date() }, // 4
+      { name: "user:update", created_at: new Date() }, // 5
+      { name: "user:update_any", created_at: new Date() }, // 6
+      { name: "user:delete", created_at: new Date() }, // 7
+      { name: "user:delete_any", created_at: new Date() }, // 8
+      // { name: "user:manage_roles", created_at: new Date() }, // 9
+      // { name: "user:manage_permissions", created_at: new Date()} //10
     ]);
   },
 
