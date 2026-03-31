@@ -6,9 +6,8 @@ import { loginSchema, registerSchema } from "../../schemas/auth.schema.js";
 import { comparePassword, hashPassword } from "../../util/passwordHelpers.js";
 import { generateToken } from "../../util/tokenHelpers.js";
 import { loginLimiter, registerLimiter } from "../../middlewares/rateLimiters.js";
-import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
 import { ERROR_CODES } from "../../util/APIError.js";
-import { authenticate } from "../../middlewares/authenticate.js";
+import authenticate from "../../middlewares/authenticate.js";
 import generateUUID from "../../util/generateUUID.js";
 
 const router = Router();
@@ -19,7 +18,6 @@ router.get(
   authenticate,
   catchAsync(async (req, res) => {
     res.sendSuccess("AuthRoutes", { name: "sample data" }, 200);
-    // res.sendError("Error message", null, 400, "SAMPLE_ERROR");
   }),
 );
 
@@ -31,10 +29,14 @@ router.post(
   catchAsync(async (req, res) => {
     const { email, password } = req.body;
 
-    const [user] = await req.db.query("SELECT user_uuid, email, password, salt, status FROM users WHERE email = ?", [
-      email,
-    ]);
-    // console.log(user);
+    const [user] = await req.db.query(
+      `
+      SELECT id, user_uuid, email, password, salt, status
+      FROM users WHERE email = ?
+      `,
+      [email],
+    );
+
     if (!user) {
       return res.sendError("No user found", "Account not found", 404, ERROR_CODES.USER_NOT_FOUND);
     }
@@ -45,11 +47,21 @@ router.post(
       return res.sendError("Incorrect Password", "Invalid Credentials", 401, ERROR_CODES.INVALID_CREDENTIALS);
     }
 
-    const token = generateToken(user.user_uuid);
+    const rows = await req.db.query(
+      `
+      SELECT r.name FROM user_roles ur
+      INNER JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = ?;`,
+      [user.id],
+    );
+
+    const roles = rows.map((role) => role.name);
+
+    const token = generateToken({ user_uuid: user.user_uuid, roles: roles });
 
     res.sendSuccess(
       "Logged In Successfully",
-      { user: { userId: user.user_uuid, email: user.email, status: user.status }, token },
+      { user: { user_uuid: user.user_uuid, email: user.email, status: user.status }, token },
       200,
     );
   }),
@@ -60,13 +72,12 @@ router.post(
   "/register",
   registerLimiter,
   validateBody(registerSchema),
-  // idempotencyMiddleware(),
   catchAsync(async (req, res) => {
     const { firstName, lastName, email, password } = req.body;
 
     const [existing] = await req.db.query("SELECT email FROM users WHERE email = ?", [email]);
 
-    if (existing && (existing.length !== 0 || existing.id)) {
+    if (existing && (existing.length !== 0 || existing.email)) {
       res.sendError(
         "Email is already taken, use a different one",
         "Email already exists",
@@ -86,10 +97,7 @@ router.post(
       salt: salt,
       status: "active",
     });
-
     res.sendSuccess("Registered Successfully!", 201);
-
-    // res.sendSuccess("Registered!", { name, email, password }, 201);
   }),
 );
 
@@ -103,6 +111,7 @@ router.get(
     const formattedUpdateDate = new Date(updated_at).toLocaleString("en-PH", { timeZone: "Asia/Manila" });
     req.user.created_at = formattedCreateDate;
     req.user.updated_at = formattedUpdateDate;
+    req.user.permissions = Array.from(req.user.permissions);
     res.status(200).json(req.user);
   }),
 );
