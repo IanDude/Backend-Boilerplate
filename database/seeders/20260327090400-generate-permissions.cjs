@@ -32,7 +32,10 @@ module.exports = {
       { name: "file:update", created_at: new Date()}, // 15 - Update own file
       { name: "file:update_any", created_at: new Date()}, // 16 - Update any file
       { name: "file:delete", created_at: new Date()}, // 17 - Delete own file
-      { name: "file:delete_any", created_at: new Date()}, // 18 - Delete any file
+      { name: "file:delete_any", created_at: new Date() }, // 18 - Delete any file
+      { name: "file:download", created_at: new Date() }, // 19 - Download own file
+      { name: "file:download_any", created_at: new Date() }, // 20 - Download any file
+      
     ]);
   },
 

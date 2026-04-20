@@ -321,16 +321,45 @@ export async function scanFile(file, options = {}) {
       // Filter out common false positives for images
       const realThreats = suspiciousPatterns.filter((pattern) => {
         // For image files, ignore null bytes and MZ headers found deep in the file
-        if (file.mimetype?.startsWith("image/")) {
-          // Ignore null bytes (common in image compression)
-          if (pattern.description.includes("Null byte")) {
-            return false;
-          }
-          // Ignore MZ header if found beyond the first 512 bytes (not in actual header)
-          if (pattern.description.includes("MZ header") && pattern.offset > 512) {
-            return false;
-          }
+        const isImage = file.mimetype?.startsWith("image/");
+        const isDocument = [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ].includes(file.mimetype);
+
+        const isAudio = ["audio/mpeg", "audio/wav", "audio/wave", "audio/ogg", "audio/aac"].includes(file.mimetype);
+
+        const isVideo = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"].includes(file.mimetype);
+
+        if (isImage || isDocument || isAudio || isVideo) {
+          if (pattern.description.includes("Null byte")) return false;
+
+          if (pattern.description.includes("MZ header") && pattern.offset > 512) return false;
         }
+
+        if (isDocument || isAudio || isVideo) {
+          if (pattern.description.includes("DOS/Windows executable") && pattern.offset > 512) return false;
+          if (pattern.description.includes("Linus ELF executable") && pattern.offset > 512) return false;
+        }
+
+        if (isAudio) {
+          if (pattern.description.includes("DOS/Windows executable") && pattern.offset > 512) return false;
+          if (pattern.description.includes("Linux ELF executable") && pattern.offset > 512) return false;
+        }
+
+        // if (file.mimetype?.startsWith("image/")) {
+        //   // Ignore null bytes (common in image compression)
+        //   if (pattern.description.includes("Null byte")) {
+        //     return false;
+        //   }
+        //   // Ignore MZ header if found beyond the first 512 bytes (not in actual header)
+        //   if (pattern.description.includes("MZ header") && pattern.offset > 512) {
+        //     return false;
+        //   }
+        // }
         return true;
       });
 
@@ -343,6 +372,7 @@ export async function scanFile(file, options = {}) {
 
         throw new APIError("File contains suspicious content and has been rejected", 400);
       }
+      // console.log("Real Threats: ", realThreats);
       scanResult.checks.noSuspiciousPatterns = true;
     } else {
       scanResult.checks.noSuspiciousPatterns = true;

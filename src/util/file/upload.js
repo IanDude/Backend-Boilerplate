@@ -30,6 +30,7 @@ const FILE_TYPE_CONFIGS = {
   audio: {
     "audio/mpeg": [".mp3"],
     "audio/wav": [".wav"],
+    "audio/wave": [".wav"],
     "audio/ogg": [".ogg"],
     "audio/aac": [".aac"],
   },
