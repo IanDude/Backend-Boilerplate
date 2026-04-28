@@ -1,7 +1,11 @@
+import helmet from "helmet";
+import cors from "cors";
+import hpp from "hpp";
+
 export function securityHeaders(options = {}) {
   const {
     isDevelopment = process.env.NODE_ENV === "development",
-    allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000"],
+    allowedOrigins = [process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS],
     enableCSP = false,
   } = options;
   return [
