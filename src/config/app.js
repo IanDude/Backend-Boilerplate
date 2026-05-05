@@ -1,22 +1,20 @@
 /**Usually created at server, but best practice is to create a separate
  * file for using express and run it on the server itself */
 import express from "express";
-import router from "../routes/router.js";
 import cookieParser from "cookie-parser";
-import helmet from "helmet";
+import passport from "passport";
+import router from "../routes/router.js";
 import Database from "./database.js";
 import { responseWrapper } from "../middlewares/responseWrapper.js";
 import configurePassport from "./passport.jwt.config.js";
-import passport from "passport";
 import globalErrorHandler from "../util/APIError.js";
 import requestLogger from "../middlewares/requestLogger.js";
 import requestIdMiddleware from "../middlewares/requestId.js";
+import { securityHeaders } from "../middlewares/securityHeaders.js";
 import { csrfErrorHandler, csrfProtection, csrfTokenHandler, validateOrigin } from "../middlewares/csrf.js";
-import { corsConfig } from "../middlewares/corsMiddleware.js";
 import { globalLimiter } from "../middlewares/rateLimiters.js";
 import logger from "../util/logger.js";
 import { globalUploadErrorHandler } from "../util/file/unlink.js";
-// import cors from "cors";
 
 const app = express();
 const db = new Database(); //create db instance
@@ -43,8 +41,7 @@ app.set("strict routing", true); //Makes routes strict, does not allow trailing 
 app.set("x-powered-by", false); //Remove header advertising usage of express for backend
 
 // app.use(cors()); //TODO: Enhance CORS configuration for production use (restrict origins, methods, etc.)
-app.use(helmet());
-app.use(corsConfig);
+app.use(securityHeaders());
 
 //logger instance
 app.use((req, res, next) => {

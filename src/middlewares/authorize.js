@@ -16,16 +16,17 @@ function authorize({ resource, action, getResource, ownerField }) {
         if (getResource) {
           console.log("Fetching resource...");
           const data = await getResource(req);
+          console.log("Data fetched successfully");
           if (!data)
             return res.sendError(`${resource} not found`, "Resource Not Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
           req.resource = data;
         }
+        console.log("Role Bypass - Skip ownership checks");
         return next();
       }
 
       // Basic permission check
       if (!hasAccess) {
-        // return res.sendError("Forbidden", 403);
         return res.sendError(`${action} denied`, "Resource not found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
       }
 
@@ -46,8 +47,18 @@ function authorize({ resource, action, getResource, ownerField }) {
           return res.sendError("No Resource Found", "Resource Not Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
         }
 
-        if (data[ownerField] !== user.id) {
-          return res.sendError("No Resource Found", "Resource Not Found", 403, ERROR_CODES.RESOURCE_NOT_FOUND);
+        //Check if data is array
+        const isDataArray = Array.isArray(data);
+        if (isDataArray) {
+          // If its array, check ownership of each file
+          for (const file of data) {
+            if (file[ownerField] !== user.id)
+              return res.sendError("No Resource Found", "Resource Not Found", 403, ERROR_CODES.RESOURCE_NOT_FOUND);
+          }
+        } else {
+          if (data[ownerField] !== user.id) {
+            return res.sendError("No Resource Found", "Resource Not Found", 403, ERROR_CODES.RESOURCE_NOT_FOUND);
+          }
         }
 
         req.resource = data;
