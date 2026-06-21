@@ -7,7 +7,7 @@ import router from "../routes/router.js";
 import Database from "./database.js";
 import { responseWrapper } from "../middlewares/responseWrapper.js";
 import configurePassport from "./passport.jwt.config.js";
-import globalErrorHandler from "../util/APIError.js";
+import globalErrorHandler from "../middlewares/globalErrorHandler.js";
 import requestLogger from "../middlewares/requestLogger.js";
 import requestIdMiddleware from "../middlewares/requestId.js";
 import { securityHeaders } from "../middlewares/securityHeaders.js";
