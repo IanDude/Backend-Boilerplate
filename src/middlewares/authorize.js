@@ -5,68 +5,81 @@ function authorize({ resource, action, getResource, ownerField }) {
     try {
       const user = req.user;
 
+      const hasAccess = user.permissions.has(`${resource}:${action}`);
       const hasAccessAny = user.permissions.has(`${resource}:${action}_any`);
       const hasAccessAll = user.permissions.has(`${resource}:${action}_all`);
-      const hasAccess = user.permissions.has(`${resource}:${action}`);
 
-      console.log({ hasAccessAny, hasAccessAll, hasAccess });
+      console.log({
+        hasAccess,
+        hasAccessAny,
+        hasAccessAll,
+      });
 
-      // Global permission check (admin/moderator)
-      if (hasAccessAll || hasAccessAny) {
-        if (getResource) {
-          console.log("Fetching resource...");
-          const data = await getResource(req);
-          console.log("Data fetched successfully");
-          if (!data)
-            return res.sendError(`${resource} not found`, "Resource Not Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
-          req.resource = data;
-        }
-        console.log("Role Bypass - Skip ownership checks");
-        return next();
+      // No permissions at all
+      if (!hasAccess && !hasAccessAny && !hasAccessAll) {
+        return res.sendError(`${action} denied`, "Forbidden", 403);
       }
 
-      // Basic permission check
-      if (!hasAccess) {
-        return res.sendError(`${action} denied`, "Resource not found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
-      }
+      let data = null;
 
-      // Ownership check (if resource exists)
+      // Load resource if needed
       if (getResource) {
-        console.log("Fetching Data in getResource()");
-        const data = await getResource(req);
-        console.log("Data Fetched Successfully");
-        if (!ownerField)
-          return res.sendError(
-            "Failed to validate ownership",
-            "ownerField required",
-            400,
-            ERROR_CODES.VALIDATION_FAILED,
-          );
+        data = await getResource(req);
 
         if (!data) {
-          return res.sendError("No Resource Found", "Resource Not Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
-        }
-
-        //Check if data is array
-        const isDataArray = Array.isArray(data);
-        if (isDataArray) {
-          // If its array, check ownership of each file
-          for (const file of data) {
-            if (file[ownerField] !== user.id)
-              return res.sendError("No Resource Found", "Resource Not Found", 403, ERROR_CODES.RESOURCE_NOT_FOUND);
-          }
-        } else {
-          if (data[ownerField] !== user.id) {
-            return res.sendError("No Resource Found", "Resource Not Found", 403, ERROR_CODES.RESOURCE_NOT_FOUND);
-          }
+          return res.sendError(`${resource} not found`, "Resource Not Found", 404);
         }
 
         req.resource = data;
       }
+
+      // Determine if resource is collection
+      const isCollection = Array.isArray(data);
+
+      console.log({ isCollection });
+
+      /*
+        ACCESS RULES
+
+        _all  -> full access to everything
+        _any  -> access to single resources only
+        base  -> owned resources only
+      */
+
+      // ADMIN
+      if (hasAccessAll) {
+        console.log("_all bypass");
+        return next();
+      }
+
+      // MODERATOR
+      if (hasAccessAny && !isCollection) {
+        console.log("_any bypass");
+        return next();
+      }
+
+      // Ownership validation
+      if (data && ownerField) {
+        if (isCollection) {
+          for (const item of data) {
+            if (item[ownerField] !== user.id) {
+              return res.sendError(`No ${resource} found`, "Forbidden", 403);
+            }
+          }
+        } else {
+          if (data[ownerField] !== user.id) {
+            return res.sendError(`No ${resource} found`, "Forbidden", 403);
+          }
+        }
+      }
+
       console.log("Authorized");
+
       return next();
     } catch (err) {
-      return res.sendError("Server error", 500);
+      console.error(err);
+
+      return res.sendError("Server error", "Internal Server Error", 500);
     }
   };
 }
