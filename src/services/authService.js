@@ -1,5 +1,6 @@
 import * as userRepository from "../repository/userRepository.js";
 import * as roleRepository from "../repository/roleRepository.js";
+import * as userRoleRepository from "../repository/userRoleRepository.js";
 import APIError, { ERROR_CODES } from "../util/APIError.js";
 import { comparePassword, hashPassword } from "../util/passwordHelpers.js";
 import { generatePasswordToken, generateToken, hashPasswordToken } from "../util/tokenHelpers.js";
@@ -52,32 +53,10 @@ export async function register({ firstName, lastName, email, password }, db) {
     throw new APIError("Failed to create new user", 500, ERROR_CODES.DATABASE_ERROR);
   }
 
+  const addUserRole = await userRoleRepository.addUserRole(createNewUser.insertId, db);
+  if (addUserRole.affectedRows === 0) throw new APIError("Failed to add user role", 400, ERROR_CODES.DATABASE_ERROR);
+
   return { user_uuid: userData.user_uuid, email, status: userData.status };
-}
-
-export async function forgotPassword({ email }, db) {
-  const user = await userRepository.findByEmail(email, db);
-
-  if (!user) {
-    throw new APIError("If this email exists, a reset link has been sent", 400, ERROR_CODES.INVALID_INPUT);
-  }
-
-  const rawToken = generatePasswordToken();
-  const hashedToken = hashPasswordToken(rawToken);
-
-  const insertToken = await passwordRepository.savePasswordToken(user.user_uuid, hashedToken, db);
-
-  if (insertToken.affectedRows === 0) {
-    throw new APIError("Failed to save password token");
-  }
-
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password.html?token=${rawToken}`;
-
-  try {
-    await emailService.sendPasswordResetEmail(email, resetLink);
-  } catch (error) {
-    throw new APIError("Failed to send email", 500, ERROR_CODES.INTERNAL_ERROR);
-  }
 }
 
 export async function resetPassword({ token, newPassword }, db) {
@@ -102,5 +81,30 @@ export async function resetPassword({ token, newPassword }, db) {
 
   if (invalidateAllPasswordToken.affectedRows === 0) {
     throw new APIError("Failed to invalidate password token", 400, ERROR_CODES.DATABASE_ERROR);
+  }
+}
+
+export async function forgotPassword({ email }, db) {
+  const user = await userRepository.findByEmail(email, db);
+
+  if (!user) {
+    throw new APIError("If this email exists, a reset link has been sent", 400, ERROR_CODES.INVALID_INPUT);
+  }
+
+  const rawToken = generatePasswordToken();
+  const hashedToken = hashPasswordToken(rawToken);
+
+  const insertToken = await passwordRepository.savePasswordToken(user.user_uuid, hashedToken, db);
+
+  if (insertToken.affectedRows === 0) {
+    throw new APIError("Failed to save password token");
+  }
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password.html?token=${rawToken}`;
+
+  try {
+    await emailService.sendPasswordResetEmail(email, resetLink);
+  } catch (error) {
+    throw new APIError("Failed to send email", 500, ERROR_CODES.INTERNAL_ERROR);
   }
 }
