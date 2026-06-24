@@ -8,6 +8,7 @@ import APIError, { ERROR_CODES } from "../../util/APIError.js";
 import generateUUID from "../../util/generateUUID.js";
 import authorize from "../../middlewares/authorize.js";
 import * as userService from "../../services/userService.js";
+import * as userRepository from "../../repository/userRepository.js";
 
 const router = Router();
 
@@ -124,14 +125,8 @@ router.put(
     resource: "user",
     action: "update",
     getResource: async (req) => {
-      const [row] = await req.db.query(
-        `
-        SELECT id, user_uuid, first_name, last_name, email
-        FROM users WHERE user_uuid = ?
-        `,
-        [req.params.userUUID],
-      );
-      return row[0];
+      const user = await userRepository.findByUUID(req.params.userUUID, req.db);
+      return user;
     },
     ownerField: "id",
   }),
@@ -151,20 +146,13 @@ router.delete(
     resource: "user",
     action: "delete",
     getResource: async (req) => {
-      const [row] = await req.db.query(
-        `
-        SELECT id, user_uuid, first_name, last_name, email
-        FROM users WHERE user_uuid = ?
-        `,
-        [req.params.userUUID],
-      );
-      return row[0];
+      const user = await userRepository.findByUUID(req.params.userUUID, req.db);
+      return user;
     },
   }),
   catchAsync(async (req, res) => {
     const user = req.resource;
     await userService.deleteUserByUUID(user.user_uuid, req.db);
-
     res.sendSuccess("User deleted successfully", null, 200);
   }),
 );
