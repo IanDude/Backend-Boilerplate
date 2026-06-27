@@ -1,5 +1,4 @@
 import * as userRepository from "../repository/userRepository.js";
-import * as roleRepository from "../repository/roleRepository.js";
 import * as userRoleRepository from "../repository/userRoleRepository.js";
 import APIError, { ERROR_CODES } from "../util/APIError.js";
 import { comparePassword, hashPassword } from "../util/passwordHelpers.js";
@@ -22,7 +21,7 @@ export async function login({ email, password }, db) {
     throw new APIError("Invalid email or password", 401, ERROR_CODES.INVALID_CREDENTIALS);
   }
 
-  const roles = await roleRepository.findById(user.id, db);
+  const roles = await userRoleRepository.findUserRole(user.id, db);
 
   const token = generateToken({ user_uuid: user.user_uuid, roles });
 

@@ -89,7 +89,7 @@ router.get(
 
 //POST /image - Upload endpoint for general image uploads
 router.post(
-  "/image",
+  "/",
   authorize({ resource: "file", action: "upload" }),
   imageUpload(),
   catchAsync(async (req, res) => {
