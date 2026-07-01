@@ -59,36 +59,7 @@ router.post(
     action: "create",
   }),
   catchAsync(async (req, res) => {
-    const { firstName, lastName, email, status, password } = req.body;
     const result = await userService.createNewUser(req.body, req.db);
-    // const userExist = await req.db.query("SELECT user_uuid FROM users WHERE email = ?", [email]);
-
-    // if (userExist && (userExist.length > 0 || userExist.id)) {
-    //   return res.sendError(
-    //     "Email is already taken, use a different one",
-    //     "Duplicate Email",
-    //     409,
-    //     ERROR_CODES.DUPLICATE_ENTRY,
-    //   );
-    // }
-    // const { hashedPassword, salt } = await hashPassword(password);
-
-    // const newUser = {
-    //   user_uuid: generateUUID(),
-    //   first_name: firstName,
-    //   last_name: lastName,
-    //   email,
-    //   password: hashedPassword,
-    //   status: status || "active",
-    //   salt: salt,
-    // };
-
-    // const result = await req.db.query("INSERT INTO users SET ?", newUser);
-
-    // if (result.affectedRows === 0) {
-    //   return res.sendError("Failed to create user", 400);
-    // }
-
     res.sendSuccess("User created successfully", result, 201);
   }),
 );
