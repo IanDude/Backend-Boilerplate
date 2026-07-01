@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { catchAsync } from "../../util/catchAsync.js";
+import catchAsync from "../../util/catchAsync.js";
 import { validateBody, validateParams } from "../../util/validation.js";
 import { UserUUIDParamSchema, newUserSchema, updateUserSchema } from "../../schemas/user.schema.js";
 import { hashPassword } from "../../util/passwordHelpers.js";

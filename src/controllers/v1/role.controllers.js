@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { catchAsync } from "../../util/catchAsync.js";
+import catchAsync from "../../util/catchAsync.js";
 import * as roleService from "../../services/roleService.js";
 import { validateBody, validateParams } from "../../util/validation.js";
 import { roleUUIDParam, roleBody } from "../../schemas/role.schema.js";

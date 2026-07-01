@@ -2,7 +2,7 @@ import { Router } from "express";
 import archiver from "archiver";
 import fs from "node:fs";
 
-import { catchAsync } from "../../util/catchAsync.js";
+import catchAsync from "../../util/catchAsync.js";
 import { audioUpload, docsUpload, imageUpload, videoUpload } from "../../middlewares/fileUploads.js";
 import fileDelete from "../../middlewares/fileDeletes.js";
 import { normalizePath, resolvePath } from "../../util/file/pathHelpers.js";
@@ -36,22 +36,6 @@ router.get(
   }),
   catchAsync(async (req, res) => {
     const files = await req.db.query("SELECT * FROM user_files");
-
-    // const archiveName = "files.zip";
-
-    // res.set("Content-Type", "application/zip");
-    // res.set("Content-Disposition", `attachment; filename=${archiveName}`);
-    // const filesPaths = files.map((f) => normalizePath(resolvePath(f.file_path)));
-    // const filesPaths
-
-    console.log(files);
-    // res.zip(filesPaths, archiveName, (err) => {
-    //   if (err) {
-    //     console.log("Error sending files", err);
-    //   } else {
-    //     console.log("Files sent successfully");
-    //   }
-    // });
     res.sendSuccess("Files retrieved successfully", files);
   }),
 );
@@ -71,18 +55,9 @@ router.get(
     ownerField: "user_id",
   }),
   catchAsync(async (req, res) => {
-    // const { fileUUID } = req.params;
-    // if (!fileUUID)
-    //   return res.sendError("File UUID required", "fileUUID parameter is null", 400, ERROR_CODES.INVALID_INPUT);
     const file = req.resource;
-    // const [file] = await req.db.query("SELECT * FROM user_files WHERE file_uuid = ?", [fileUUID]);
-    // if (!file) return res.sendError("No Matching File", "File Not Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
-    // console.log(fileUUID);
-    // console.log(`Created At: ${new Date(file.created_at).toLocaleTimeString("en-PH")}`);
     const resolvedPath = resolvePath(file.file_path);
     console.log("Serving file from:", resolvedPath);
-    // file.path = normalizePath(resolvedPath);
-    // res.sendFile(file.path);
     res.sendSuccess("File Found!", file);
   }),
 );
@@ -166,30 +141,6 @@ router.post(
       file.size,
       "gallery",
     ]);
-
-    // const filesDataObject = files.map((file) => ({
-    //   file_uuid: generateUUID(),
-    //   user_id: req.user.id,
-    //   file_name: file.filename,
-    //   original_name: file.originalname,
-    //   file_path: normalizePath(file.path),
-    //   mime_type: file.mimetype,
-    //   file_size: file.size,
-    //   category: "gallery",
-    // }));
-    // const start = Date.now();
-    // console.log("Start time: Object", start);
-    // for (const file of filesDataObject) {
-    //   const insertFile = await req.db.query("INSERT INTO user_files SET ?", [file]);
-    //   console.log(insertFile);
-    // }
-    // const duration = Date.now() - start;
-    // console.log("End Time: Object", duration);
-    // console.log(files);
-    // console.log(filesData);
-    // const startTime = Date.now();
-    // console.log("Start Time: Array", startTime);
-
     const insertImages = await req.db.query(
       `INSERT INTO user_files (
         file_uuid,
@@ -203,9 +154,6 @@ router.post(
       ) VALUES ? `,
       [filesData],
     );
-    // const endTime = Date.now() - startTime;
-    // console.log("End Time: Array", endTime);
-    // console.log(insertImages);
     if (insertImages.affectedRows === 0) return res.sendError("Failed to Upload Images");
     res.sendSuccess("Images Uploaded Successfully", filesData);
   }),
@@ -293,19 +241,7 @@ router.put(
     ownerField: "user_id",
   }),
   catchAsync(async (req, res) => {
-    // const { fileUUID } = req.params;
     const file = req.resource;
-    console.log(file);
-    // const { originalName, category, isPublic } = req.body;
-
-    // const updateResult = await req.db.query(
-    //   `
-    // UPDATE user_files SET ? WHERE file_uuid = ?`,
-    //   [{ original_name: originalName, category, isPublic }, fileUUID],
-    // );
-
-    // if (updateResult.affectedRows === 0) return res.sendError("Failed to update file data");
-
     res.sendSuccess("File data updated successfully");
   }),
 );
@@ -366,9 +302,6 @@ router.post(
     ownerField: "user_id",
   }),
   catchAsync(async (req, res) => {
-    // const { fileUUIDs } = req.body;
-    // const rows = await req.db.query("SELECT * FROM user_files WHERE file_uuid IN (?)", [fileUUIDs]);
-    // console.log(rows);
     const files = req.resource;
     const zipName = `${Date.now()}_files.zip`;
     const archive = archiver("zip", {

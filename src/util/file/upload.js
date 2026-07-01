@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import APIError, { ERROR_CODES } from "../APIError.js";
-import { catchAsync } from "../catchAsync.js";
+import catchAsync from "../catchAsync.js";
 const FILE_TYPE_CONFIGS = {
   images: {
     "image/jpeg": [".jpg", ".jpeg"],
