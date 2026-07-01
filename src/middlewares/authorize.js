@@ -36,8 +36,6 @@ function authorize({ resource, action, getResource, ownerField }) {
       // Determine if resource is collection
       const isCollection = Array.isArray(data);
 
-      console.log({ isCollection });
-
       /*
         ACCESS RULES
 
@@ -77,9 +75,7 @@ function authorize({ resource, action, getResource, ownerField }) {
 
       return next();
     } catch (err) {
-      console.error(err);
-
-      return res.sendError("Server error", "Internal Server Error", 500);
+      return res.sendError(err.message, err, err.status, err.code);
     }
   };
 }

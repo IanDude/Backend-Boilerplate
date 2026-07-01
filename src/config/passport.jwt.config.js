@@ -5,6 +5,7 @@ import passport from "passport";
 import { ExtractJwt, Strategy as jwtStrategy } from "passport-jwt";
 import * as userRepository from "../repository/userRepository.js";
 import * as permissionRepository from "../repository/permissionRepository.js";
+import APIError, { ERROR_CODES } from "../util/APIError.js";
 
 const publicKey = fs.readFileSync(path.resolve(`${process.env.JWT_PUBLIC_PATH}`), "utf-8");
 // console.log("Public Key", publicKey);
@@ -21,6 +22,7 @@ const configurePassport = (db) => {
       try {
         const rows = await userRepository.findByUUID(jwt_payload.user_uuid, db);
         // console.log("User from payload", rows);
+        if (!rows) throw new APIError("Invalid Token", 400, ERROR_CODES.TOKEN_EXPIRED);
         const user = rows?.[0] ?? rows;
         // console.log("User:", user);
         const permissions = await permissionRepository.getPermissions(user.id, db);
