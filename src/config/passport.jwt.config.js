@@ -25,7 +25,7 @@ const configurePassport = (db) => {
         if (!rows) throw new APIError("Invalid Token", 400, ERROR_CODES.TOKEN_EXPIRED);
         const user = rows?.[0] ?? rows;
         // console.log("User:", user);
-        const permissions = await permissionRepository.getPermissions(user.id, db);
+        const permissions = await permissionRepository.getUserPermissionsById(user.id, db);
         user.permissions = new Set(permissions.map((p) => p.name));
         // console.log(user.permissions);
 
