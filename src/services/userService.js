@@ -6,14 +6,13 @@ import { hashPassword } from "../util/passwordHelpers.js";
 
 export async function getAllUsers(db) {
   const users = await userRepository.getAll(db);
-  // console.log(users);
   if (!users) throw new APIError("No Data Found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
   return users;
 }
 
 export async function getUserByUUID(uuid, db) {
   const result = await userRepository.findByUUID(uuid, db);
-  if (!reuslt) throw new APIError("No User Found", 404, ERROR_CODES.USER_NOT_FOUND);
+  if (!result) throw new APIError("No User Found", 404, ERROR_CODES.USER_NOT_FOUND);
   return result;
 }
 
