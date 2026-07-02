@@ -2,7 +2,7 @@ import { Router } from "express";
 import catchAsync from "../../util/catchAsync.js";
 import * as permissionService from "../../services/permissionService.js";
 import { validateBody, validateParams } from "../../util/validation.js";
-import { permissionUUIDParams, permissionBody } from "../../schemas/permission.schema.js";
+import { permissionUUIDParam, permissionBody } from "../../schemas/permission.schema.js";
 
 const router = Router();
 
@@ -28,7 +28,7 @@ router.post(
 // PUT / - Update an existing permission
 router.put(
   "/permissionUUID",
-  validateParams(permissionUUIDParams),
+  validateParams(permissionUUIDParam),
   validateBody(permissionBody),
   catchAsync(async (req, res) => {
     await permissionService.updatePermission(req.params.permissionUUID, req.body.permissionName, req.db);
@@ -39,7 +39,7 @@ router.put(
 // DELETE / - Delete an existing permission
 router.delete(
   "/permissionUUID",
-  validateBody(permissionUUIDParams),
+  validateBody(permissionUUIDParam),
   catchAsync(async (req, res) => {
     await permissionService.deletePermission(req.params.permissionUUID, req.db);
     res.sendSuccess("Successfully deleted a permissions");

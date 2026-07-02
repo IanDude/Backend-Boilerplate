@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export const permissionUUIDParams = z.object({
-  permissionUUID = z.string(),
+export const permissionUUIDParam = z.object({
+  permissionUUID: z.string(),
 });
 
 export const permissionBody = z.object({
-  permissionName = z.string(),
-})
+  permissionName: z.string(),
+});
