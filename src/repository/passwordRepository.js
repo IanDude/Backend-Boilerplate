@@ -21,8 +21,8 @@ export async function findValidToken(hashedToken, db) {
     `,
     [hashedToken],
   );
-
-  return passwordToken[0] || null;
+  if (passwordToken.length === 0) return null;
+  return passwordToken[0];
 }
 
 export async function invalidateAllPasswordToken(user_uuid, db) {

@@ -1,3 +1,5 @@
+import APIError, { ERROR_CODES } from "../util/APIError.js";
+
 export async function addUserRole(userId, db, roleId = 3) {
   const [result] = await db.query(
     `
@@ -9,7 +11,7 @@ export async function addUserRole(userId, db, roleId = 3) {
 }
 
 export async function findUserRole(id, db) {
-  const [rows] = await db.query(
+  const [result] = await db.query(
     `
     SELECT r.name FROM user_roles ur
     INNER JOIN roles r ON ur.role_id = r.id
@@ -17,7 +19,7 @@ export async function findUserRole(id, db) {
     `,
     [id],
   );
-  const roles = rows.map((role) => role.name);
+  if (result.length === 0) return null;
+  const roles = result.map((role) => role.name);
   return roles;
 }
-

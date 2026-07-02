@@ -1,9 +1,10 @@
+import APIError, { ERROR_CODES } from "../util/APIError.js";
 import generateUUID from "../util/generateUUID.js";
 
 export async function getAll(db) {
   const [result] = await db.query("SELECT role_uuid, name FROM roles");
-  // console.log(result);
-  return result || null;
+  if (result.length === 0) return null;
+  return result;
 }
 
 export async function findByUUID(roleUUID, db) {
@@ -14,7 +15,7 @@ export async function findByUUID(roleUUID, db) {
     `,
     [roleUUID],
   );
-
+  if (role.length === 0) return null;
   return role;
 }
 

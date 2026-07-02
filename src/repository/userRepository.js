@@ -7,7 +7,8 @@ export async function findByEmail(email, db) {
     FROM users WHERE email = ?`,
     [email],
   );
-  return result[0] || null;
+  if (result.length === 0) return null;
+  return result[0];
 }
 
 export async function createNewUser(newUserData, db) {
@@ -21,13 +22,14 @@ export async function createNewUser(newUserData, db) {
 }
 
 export async function updateUserPassword({ user_uuid, hashedPassword }, db) {
-  const [updatePassword] = await db.query(
-    `UPDATE users SET password = ?
+  const [result] = await db.query(
+    `
+    UPDATE users SET password = ?
     WHERE user_uuid = ?`,
     [hashedPassword, user_uuid],
   );
 
-  return updatePassword;
+  return result;
 }
 
 export async function getAll(db) {
@@ -35,8 +37,8 @@ export async function getAll(db) {
     `SELECT id, user_uuid, first_name, last_name, email, status, created_at, updated_at
     FROM users`,
   );
-  // console.log(users);
-  return users || null;
+  if (users.length === 0) return null;
+  return users;
 }
 
 export async function findByUUID(uuid, db) {
@@ -46,7 +48,8 @@ export async function findByUUID(uuid, db) {
     FROM users WHERE user_uuid = ?`,
     [uuid],
   );
-  return user[0] || null;
+  if (user.length === 0) return null;
+  return user[0];
 }
 
 export async function verifyUserById(userId, db) {

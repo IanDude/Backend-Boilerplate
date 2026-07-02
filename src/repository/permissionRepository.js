@@ -1,5 +1,5 @@
 export async function getUserPermissionsById(userId, db) {
-  const [rows] = await db.query(
+  const [result] = await db.query(
     `
     SELECT DISTINCT p.name from user_roles ur
     INNER JOIN role_permissions rp ON ur.role_id = rp.role_id
@@ -8,7 +8,8 @@ export async function getUserPermissionsById(userId, db) {
     `,
     [userId],
   );
-  return rows || null;
+  if (result.length === 0) return null;
+  return result;
 }
 
 export async function getAll(db) {
@@ -18,7 +19,7 @@ export async function getAll(db) {
     FROM permissions
     `,
   );
-
+  if (result.length === 0) return null;
   return result;
 }
 
