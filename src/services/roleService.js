@@ -1,5 +1,6 @@
 import * as roleRepository from "../repository/roleRepository.js";
 import APIError, { ERROR_CODES } from "../util/APIError.js";
+import generateUUID from "../util/generateUUID.js";
 
 export async function getRoles(db) {
   const roles = await roleRepository.getAll(db);
@@ -7,8 +8,9 @@ export async function getRoles(db) {
   return roles;
 }
 
-export async function addRole({ roleName }, db) {
-  const result = await roleRepository.createNewRole(roleName, db);
+export async function addRole(roleName, db) {
+  const roleData = { role_uuid: generateUUID(), name: roleName };
+  const result = await roleRepository.createNewRole(roleData, db);
   if (result.affectedRows === 0) throw new APIError("Failed to create new role", 400, ERROR_CODES.DATABASE_ERROR);
 }
 

@@ -18,12 +18,12 @@ export async function findByUUID(roleUUID, db) {
   return role;
 }
 
-export async function createNewRole(roleName, db) {
+export async function createNewRole(roleData, db) {
   const [result] = await db.query(
     `
-    INSERT INTO roles (role_uuid, name) VALUES (?, ?)
+    INSERT INTO roles SET ?
     `,
-    [generateUUID(), roleName],
+    [roleData],
   );
   return result;
 }

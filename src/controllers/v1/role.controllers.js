@@ -20,7 +20,7 @@ router.post(
   "/",
   validateBody(roleBody),
   catchAsync(async (req, res) => {
-    await roleService.addRole(req.body, req.db);
+    await roleService.addRole(req.body.roleName, req.db);
     res.sendSuccess("Success in creating new role");
   }),
 );
