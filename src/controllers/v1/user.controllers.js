@@ -30,7 +30,7 @@ router.get(
   }),
 );
 
-//GET /users/:id - Get a user by UUID
+//GET /users/:userUUID - Get a user by UUID
 router.get(
   "/:userUUID",
   validateParams(UserUUIDParamSchema),

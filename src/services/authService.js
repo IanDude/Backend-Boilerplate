@@ -58,31 +58,6 @@ export async function register({ firstName, lastName, email, password }, db) {
   return { user_uuid: userData.user_uuid, email, status: userData.status };
 }
 
-export async function resetPassword({ token, newPassword }, db) {
-  const hashedToken = hashPasswordToken(token);
-
-  const passwordToken = await passwordRepository.findValidToken(hashedToken, db);
-
-  if (!passwordToken) {
-    throw new APIError("Invalid or expired token", 400, ERROR_CODES.INVALID_ORIGIN);
-  }
-
-  const user_uuid = passwordToken.user_uuid;
-  const { hashedPassword } = await hashPassword(newPassword);
-
-  const updatePassword = await userRepository.updateUserPassword({ user_uuid, hashedPassword }, db);
-
-  if (updatePassword.affectedRows === 0) {
-    throw new APIError("Failed to update password", 500, ERROR_CODES.DATABASE_ERROR);
-  }
-
-  const invalidateAllPasswordToken = await passwordRepository.invalidateAllPasswordToken(user_uuid, db);
-
-  if (invalidateAllPasswordToken.affectedRows === 0) {
-    throw new APIError("Failed to invalidate password token", 400, ERROR_CODES.DATABASE_ERROR);
-  }
-}
-
 export async function forgotPassword({ email }, db) {
   const user = await userRepository.findByEmail(email, db);
 
@@ -105,5 +80,30 @@ export async function forgotPassword({ email }, db) {
     await emailService.sendPasswordResetEmail(email, resetLink);
   } catch (error) {
     throw new APIError("Failed to send email", 500, ERROR_CODES.INTERNAL_ERROR);
+  }
+}
+
+export async function resetPassword({ token, newPassword }, db) {
+  const hashedToken = hashPasswordToken(token);
+
+  const passwordToken = await passwordRepository.findValidToken(hashedToken, db);
+
+  if (!passwordToken) {
+    throw new APIError("Invalid or expired token", 400, ERROR_CODES.INVALID_ORIGIN);
+  }
+
+  const user_uuid = passwordToken.user_uuid;
+  const { hashedPassword } = await hashPassword(newPassword);
+
+  const updatePassword = await userRepository.updateUserPassword({ user_uuid, hashedPassword }, db);
+
+  if (updatePassword.affectedRows === 0) {
+    throw new APIError("Failed to update password", 500, ERROR_CODES.DATABASE_ERROR);
+  }
+
+  const invalidateAllPasswordToken = await passwordRepository.invalidateAllPasswordToken(user_uuid, db);
+
+  if (invalidateAllPasswordToken.affectedRows === 0) {
+    throw new APIError("Failed to invalidate password token", 400, ERROR_CODES.DATABASE_ERROR);
   }
 }
