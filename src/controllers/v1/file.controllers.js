@@ -62,7 +62,7 @@ router.get(
   }),
 );
 
-//POST /image - Upload endpoint for general image uploads
+//POST / - Upload endpoint for general image uploads
 router.post(
   "/",
   authorize({ resource: "file", action: "upload" }),

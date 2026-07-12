@@ -10,7 +10,7 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
 
-    await queryInterface.createTable("user_files", {
+    await queryInterface.createTable("files", {
       file_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
