@@ -7,13 +7,12 @@ export const unlinkSingle = async (file) => {
   try {
     if (!file) return false;
 
-    const filePath = file.path || file;
-
+    const filePath = file.file_path || file;
+    // console.log("File Path from unlink:", filePath);
     // Check if file exists before trying to delete
     try {
       await fs.access(filePath);
       await fs.unlink(filePath);
-      console.log(`Successfully deleted file: ${filePath}`);
       return true;
     } catch (accessErr) {
       // File doesn't exist, which is fine
@@ -35,7 +34,7 @@ export const unlinkMultiple = async (files) => {
 
     const results = await Promise.allSettled(
       files.map(async (file) => {
-        const filePath = file.path || file;
+        const filePath = file.file_path || file;
         try {
           await fs.access(filePath);
           await fs.unlink(filePath);

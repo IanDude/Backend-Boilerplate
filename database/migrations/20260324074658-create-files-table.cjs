@@ -19,7 +19,8 @@ module.exports = {
       },
       file_uuid: {
         type: Sequelize.UUID,
-        primaryKey: true,
+        allowNull: false,
+        unique: true,
       },
       user_id: {
         type: Sequelize.INTEGER,
@@ -31,51 +32,41 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      file_name: {
-        type: Sequelize.STRING,
+      file_name: { type: Sequelize.STRING, allowNull: false },
+      original_name: { type: Sequelize.STRING, allowNull: false },
+      file_path: { type: Sequelize.TEXT, allowNull: false },
+      mime_type: { type: Sequelize.STRING, allowNull: false },
+      file_size: { type: Sequelize.INTEGER, allowNull: false },
+      file_hash: { type: Sequelize.STRING, allowNull: true },
+      storage_provider: {
+        type: Sequelize.ENUM("local", "s3"),
         allowNull: false,
+        defaultValue: "local",
       },
-      original_name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      file_path: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      mime_type: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      file_size: {
-        type: Sequelize.INTEGER,
+      file_type: {
+        type: Sequelize.ENUM("image", "document", "audio", "video"),
         allowNull: false,
       },
       category: {
-        type: Sequelize.ENUM("profile", "gallery", "document"),
-        allowNull: false,
+        type: Sequelize.STRING,
+        allowNull: true,
       },
-      is_public: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
+      extension: {
+        type: Sequelize.STRING,
+        allowNull: true
       },
-      created_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
-      },
+      is_public: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+      created_at: { type: Sequelize.DATE, allowNull: false, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()") },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP()"),
         onUpdate: Sequelize.literal("CURRENT_TIMESTAMP()"),
       },
-      deleted_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
+      deleted_at: { type: Sequelize.DATE, allowNull: true },
     });
+    await queryInterface.addIndex("files", ["user_id"]);
+    await queryInterface.addIndex("files", ["deleted_at"]);
   },
 
   async down(queryInterface, Sequelize) {
@@ -85,6 +76,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("user_files");
+    await queryInterface.dropTable("files");
   },
 };
