@@ -36,7 +36,16 @@ module.exports = {
       { permission_uuid: uuidv4(), name: "file:delete_any", created_at: new Date() }, // 19 - Delete any file
       { permission_uuid: uuidv4(), name: "file:download", created_at: new Date() }, // 20 - Download own file
       { permission_uuid: uuidv4(), name: "file:download_any", created_at: new Date() }, // 21 - Download any file
-      
+      // Role Module
+      { permission_uuid: uuidv4(), name: "role:view", created_at: new Date()}, // 22 - View roles
+      { permission_uuid: uuidv4(), name: "role:create", created_at: new Date()}, // 23 - Create new role
+      { permission_uuid: uuidv4(), name: "role:update", created_at: new Date()}, // 24 - Update role
+      { permission_uuid: uuidv4(), name: "role:delete", created_at: new Date()}, // 25 - Delete role
+      // Permission Module
+      { permission_uuid: uuidv4(), name: "permission:view", created_at: new Date()}, // 26 - View permissions
+      { permission_uuid: uuidv4(), name: "permission:create", created_at: new Date()}, // 27 - Create new permission
+      { permission_uuid: uuidv4(), name: "permission:update", created_at: new Date()}, // 28 - Update permission
+      { permission_uuid: uuidv4(), name: "permission:delete", created_at: new Date()}, // 29 - Delete permission
     ]);
   },
 

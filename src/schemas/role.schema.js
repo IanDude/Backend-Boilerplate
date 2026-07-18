@@ -7,3 +7,7 @@ export const roleUUIDParam = z.object({
 export const roleBody = z.object({
   roleName: z.string(),
 });
+
+export const roleUUIDBody = z.object({
+  roleUUID: z.string().uuid(),
+});

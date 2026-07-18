@@ -1,7 +1,12 @@
 import { Router } from "express";
 import catchAsync from "../../util/catchAsync.js";
 import { validateBody, validateParams } from "../../util/validation.js";
-import { UserUUIDParamSchema, newUserSchema, updateUserSchema } from "../../schemas/user.schema.js";
+import {
+  UserUUIDParamSchema,
+  newUserSchema,
+  updateUserSchema,
+  userRoleParamSchema,
+} from "../../schemas/user.schema.js";
 import { hashPassword } from "../../util/passwordHelpers.js";
 import { idempotencyMiddleware } from "../../middlewares/idempotency.js";
 import APIError, { ERROR_CODES } from "../../util/APIError.js";
@@ -9,6 +14,7 @@ import generateUUID from "../../util/generateUUID.js";
 import authorize from "../../middlewares/authorize.js";
 import * as userService from "../../services/userService.js";
 import * as userRepository from "../../repository/userRepository.js";
+import { roleUUIDBody, roleUUIDParam } from "../../schemas/role.schema.js";
 
 const router = Router();
 
@@ -19,8 +25,7 @@ router.get(
     resource: "user",
     action: "view",
     getResource: async (req) => {
-      const users = await userService.getAllUsers(req.db);
-      return users;
+      return await userService.getAllUsers(req.db);
     },
     ownerField: "id",
   }),
@@ -38,9 +43,7 @@ router.get(
     resource: "user",
     action: "view",
     getResource: async (req) => {
-      const { userUUID } = req.params;
-      const user = await userService.getUserByUUID(userUUID, req.db);
-      return user;
+      return await userService.getUserByUUID(req.params.userUUID, req.db);
     },
     ownerField: "id",
   }),
@@ -96,15 +99,13 @@ router.put(
     resource: "user",
     action: "update",
     getResource: async (req) => {
-      const user = await userRepository.findByUUID(req.params.userUUID, req.db);
-      return user;
+      return await userRepository.findByUUID(req.params.userUUID, req.db);
     },
     ownerField: "id",
   }),
   catchAsync(async (req, res) => {
     const user = req.resource;
     await userService.updateUserByUUID(user.user_uuid, req.body, req.db);
-
     res.sendSuccess("User updated successfully", null, 200);
   }),
 );
@@ -117,14 +118,44 @@ router.delete(
     resource: "user",
     action: "delete",
     getResource: async (req) => {
-      const user = await userRepository.findByUUID(req.params.userUUID, req.db);
-      return user;
+      return await userRepository.findByUUID(req.params.userUUID, req.db);
     },
   }),
   catchAsync(async (req, res) => {
     const user = req.resource;
     await userService.deleteUserByUUID(user.user_uuid, req.db);
     res.sendSuccess("User deleted successfully", null, 200);
+  }),
+);
+
+// POST - /:userUUID/roles - Assign a role to a user
+router.post(
+  "/:userUUID/roles",
+  validateParams(UserUUIDParamSchema),
+  validateBody(roleUUIDBody),
+  authorize({
+    resource: "user",
+    action: "assign_role",
+    getResource: async (req) => await userService.getUserByUUID(req.params.userUUID, req.db),
+  }),
+  catchAsync(async (req, res) => {
+    await userService.assignRole(req.resource, req.body.roleUUID, req.db);
+    res.sendSuccess("User role successfully assigned");
+  }),
+);
+
+// DELETE - /:userUUID/roles/:roleUUID - Remove a role from a user
+router.delete(
+  "/:userUUID/roles/:roleUUID",
+  validateParams(userRoleParamSchema),
+  authorize({
+    resource: "user",
+    action: "remove_role",
+    getResource: async (req) => await userService.getUserByUUID(req.params.userUUID, req.db),
+  }),
+  catchAsync(async (req, res) => {
+    await userService.removeRole(req.resource, req.params.roleUUID, req.db);
+    res.sendSuccess("User role successfully removed");
   }),
 );
 

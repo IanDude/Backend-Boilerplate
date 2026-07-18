@@ -1,5 +1,6 @@
 import * as userRepository from "../repository/userRepository.js";
 import * as userRoleRepository from "../repository/userRoleRepository.js";
+import * as roleRepository from "../repository/roleRepository.js";
 import APIError, { ERROR_CODES } from "../util/APIError.js";
 import generateUUID from "../util/generateUUID.js";
 import { hashPassword } from "../util/passwordHelpers.js";
@@ -38,7 +39,7 @@ export async function createNewUser({ firstName, lastName, email, status, passwo
   if (createNewUser.affectedRows === 0)
     throw new APIError("Failed to insert new user", 400, ERROR_CODES.DATABASE_ERROR);
 
-  const addUserRole = await userRoleRepository.addUserRole(createNewUser.insertId, db);
+  const addUserRole = await userRoleRepository.assign(createNewUser.insertId, 3, db);
 
   return {
     user_uuid: newUser.user_uuid,
@@ -85,4 +86,29 @@ export async function updateUserByUUID(user_uuid, { firstName, lastName, email }
 export async function deleteUserByUUID(userUUID, db) {
   const result = await userRepository.deleteUser(userUUID, db);
   if (result.affectedRows === 0) throw new APIError("Failed to delete user", 400, ERROR_CODES.DATABASE_ERROR);
+}
+
+export async function assignRole(targetUser, roleUUID, db) {
+  const role = await roleRepository.findByUUID(roleUUID, db);
+  if (!role) throw new APIError("Role not found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
+
+  const alreadyHasRole = await userRoleRepository.exists(targetUser.id, role.id, db);
+  if (alreadyHasRole) throw new APIError("User already has this role", 400, ERROR_CODES.VALIDATION_FAILED);
+
+  const addRole = await userRoleRepository.assign(targetUser.id, role.id, db);
+  if (addRole.affectedRows === 0) throw new APIError("Failed to assign role to user", 400, ERROR_CODES.DATABASE_ERROR);
+}
+
+export async function removeRole(targetUser, roleUUID, db) {
+  const role = await roleRepository.findByUUID(roleUUID, db);
+  if (!role) throw new APIError("Role not found", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
+
+  if (role.name === "admin") {
+    const adminCount = await userRoleRepository.countUsersWithRole(role.id, db);
+    if (adminCount <= 1) throw new APIError("Cannot remove the last admin", 400, ERROR_CODES.VALIDATION_FAILED);
+  }
+
+  const result = await userRoleRepository.remove(targetUser.id, role.id, db);
+  if (result.affectedRows === 0)
+    throw new APIError("User does not have this role", 404, ERROR_CODES.RESOURCE_NOT_FOUND);
 }

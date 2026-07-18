@@ -3,12 +3,14 @@ import catchAsync from "../../util/catchAsync.js";
 import * as roleService from "../../services/roleService.js";
 import { validateBody, validateParams } from "../../util/validation.js";
 import { roleUUIDParam, roleBody } from "../../schemas/role.schema.js";
+import authorize from "../../middlewares/authorize.js";
 
 const router = Router();
 
 // GET / - Get all roles
 router.get(
   "/",
+  authorize({ resource: "role", action: "view" }),
   catchAsync(async (req, res) => {
     const result = await roleService.getRoles(req.db);
     res.sendSuccess("Success in getting all roles", result);
@@ -19,6 +21,7 @@ router.get(
 router.post(
   "/",
   validateBody(roleBody),
+  authorize({ resource: "role", action: "create" }),
   catchAsync(async (req, res) => {
     await roleService.addRole(req.body.roleName, req.db);
     res.sendSuccess("Success in creating new role");
@@ -30,6 +33,7 @@ router.put(
   "/:roleUUID",
   validateParams(roleUUIDParam),
   validateBody(roleBody),
+  authorize({ resource: "role", action: "update" }),
   catchAsync(async (req, res) => {
     await roleService.updateRole(req.params.roleUUID, req.body, req.db);
     res.sendSuccess("Success in updating a role");
@@ -40,6 +44,7 @@ router.put(
 router.delete(
   "/:roleUUID",
   validateParams(roleUUIDParam),
+  authorize({ resource: "role", action: "delete" }),
   catchAsync(async (req, res) => {
     await roleService.deleteRole(req.params.roleUUID, req.db);
     res.sendSuccess("Success in deleting a role");

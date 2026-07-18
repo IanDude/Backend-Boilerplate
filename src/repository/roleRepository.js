@@ -10,13 +10,13 @@ export async function getAll(db) {
 export async function findByUUID(roleUUID, db) {
   const [role] = await db.query(
     `
-    SELECT role_uuid, name FROM roles
+    SELECT * FROM roles
     WHERE role_uuid = ?
     `,
     [roleUUID],
   );
   if (role.length === 0) return null;
-  return role;
+  return role[0];
 }
 
 export async function createNewRole(roleData, db) {

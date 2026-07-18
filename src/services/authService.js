@@ -52,7 +52,7 @@ export async function register({ firstName, lastName, email, password }, db) {
     throw new APIError("Failed to create new user", 500, ERROR_CODES.DATABASE_ERROR);
   }
 
-  const addUserRole = await userRoleRepository.addUserRole(createNewUser.insertId, db);
+  const addUserRole = await userRoleRepository.assign(createNewUser.insertId, 3, db);
   if (addUserRole.affectedRows === 0) throw new APIError("Failed to add user role", 400, ERROR_CODES.DATABASE_ERROR);
 
   return { user_uuid: userData.user_uuid, email, status: userData.status };

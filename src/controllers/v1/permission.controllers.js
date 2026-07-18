@@ -3,12 +3,14 @@ import catchAsync from "../../util/catchAsync.js";
 import * as permissionService from "../../services/permissionService.js";
 import { validateBody, validateParams } from "../../util/validation.js";
 import { permissionUUIDParam, permissionBody } from "../../schemas/permission.schema.js";
+import authorize from "../../middlewares/authorize.js";
 
 const router = Router();
 
 //GET / - Get all permissions
 router.get(
   "/",
+  authorize({ resource: "permission", action: "view" }),
   catchAsync(async (req, res) => {
     const result = await permissionService.getPermissions(req.db);
     res.sendSuccess("Successfully retrieved permissions", result);
@@ -19,6 +21,7 @@ router.get(
 router.post(
   "/",
   validateBody(permissionBody),
+  authorize({ resource: "permission", action: "create" }),
   catchAsync(async (req, res) => {
     await permissionService.addPermission(req.body.permissionName, req.db);
     res.sendSuccess("Successfully created new permission");
@@ -27,9 +30,10 @@ router.post(
 
 // PUT / - Update an existing permission
 router.put(
-  "/permissionUUID",
+  "/:permissionUUID",
   validateParams(permissionUUIDParam),
   validateBody(permissionBody),
+  authorize({ resource: "permission", action: "update" }),
   catchAsync(async (req, res) => {
     await permissionService.updatePermission(req.params.permissionUUID, req.body.permissionName, req.db);
     res.sendSuccess("Successfully updated a permission");
@@ -38,8 +42,9 @@ router.put(
 
 // DELETE / - Delete an existing permission
 router.delete(
-  "/permissionUUID",
+  "/:permissionUUID",
   validateBody(permissionUUIDParam),
+  authorize({ resource: "permission", action: "delete" }),
   catchAsync(async (req, res) => {
     await permissionService.deletePermission(req.params.permissionUUID, req.db);
     res.sendSuccess("Successfully deleted a permissions");
