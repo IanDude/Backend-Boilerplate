@@ -7,13 +7,12 @@ export const unlinkSingle = async (file) => {
   try {
     if (!file) return false;
 
-    const filePath = file.path || file;
-
+    const filePath = file.file_path || file;
+    // console.log("File Path from unlink:", filePath);
     // Check if file exists before trying to delete
     try {
       await fs.access(filePath);
       await fs.unlink(filePath);
-      console.log(`Successfully deleted file: ${filePath}`);
       return true;
     } catch (accessErr) {
       // File doesn't exist, which is fine
@@ -35,7 +34,7 @@ export const unlinkMultiple = async (files) => {
 
     const results = await Promise.allSettled(
       files.map(async (file) => {
-        const filePath = file.path || file;
+        const filePath = file.file_path || file;
         try {
           await fs.access(filePath);
           await fs.unlink(filePath);
@@ -117,7 +116,7 @@ export const cleanupUploadedFiles = async (req) => {
 export const globalUploadErrorHandler = (err, req, res, next) => {
   // Only handle multer errors and file-related APIErrors globally
   // Let other errors pass through to your main error handler
-  if (!(err instanceof multer.MulterError) && !(err instanceof APIError)) {
+  if (!(err instanceof multer.MulterError)) {
     //removed {&& err.message.includes("file")} on the second condition for proper error response on file upload errors
     return next(err);
   }
@@ -197,13 +196,13 @@ export const globalUploadErrorHandler = (err, req, res, next) => {
   }
 
   // Handle custom APIError from file validation
-  if (err instanceof APIError) {
-    return res.status(err.statusCode || 400).json({
-      success: false,
-      error: "File validation error",
-      message: err.message,
-    });
-  }
+  // if (err instanceof APIError) {
+  //   return res.status(err.statusCode || 400).json({
+  //     success: false,
+  //     error: "File validation error",
+  //     message: err.message,
+  //   });
+  // }
 
   // If we get here, pass to next error handler
   next(err);

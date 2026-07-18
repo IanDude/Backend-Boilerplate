@@ -44,3 +44,37 @@ export const usersRouteLimiter = rateLimit({
     res.sendError("Too many user requests, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
   },
 });
+
+export const filesRouteLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  limit: 50,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  handler: (req, res) => {
+    res.sendError("Too many file requests, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
+  },
+});
+
+export const roleRouteLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  limit: 50,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  handler: (req, res) => {
+    res.sendError("Too many requests, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
+  },
+});
+
+export const permissionRouteLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  limit: 50,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  handler: (req, res) => {
+    res.sendError("Too many requests, try again later", null, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED);
+  },
+});
+

@@ -310,7 +310,7 @@ export async function scanFile(file, options = {}) {
       // Only scan first 1KB for image files (reduces false positives)
       const scanSize = file.mimetype?.startsWith("image/") ? 1024 : 1024 * 1024;
       const suspiciousPatterns = await scanForSuspiciousPatterns(file.path, scanSize);
-      console.log("suspiciousPatterns: ", suspiciousPatterns);
+      // console.log("suspiciousPatterns: ", suspiciousPatterns);
       scanResult.suspiciousPatterns = suspiciousPatterns;
 
       // Ensure suspiciousPatterns is an array (defensive programming)
@@ -342,7 +342,7 @@ export async function scanFile(file, options = {}) {
 
         if (isDocument || isAudio || isVideo) {
           if (pattern.description.includes("DOS/Windows executable") && pattern.offset > 512) return false;
-          if (pattern.description.includes("Linus ELF executable") && pattern.offset > 512) return false;
+          if (pattern.description.includes("Linux ELF executable") && pattern.offset > 512) return false;
         }
 
         if (isAudio) {

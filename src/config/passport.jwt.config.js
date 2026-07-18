@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import passport from "passport";
 import { ExtractJwt, Strategy as jwtStrategy } from "passport-jwt";
-import getPermissions from "../util/getPermissions.js";
+import * as userRepository from "../repository/userRepository.js";
+import * as permissionRepository from "../repository/permissionRepository.js";
+import APIError, { ERROR_CODES } from "../util/APIError.js";
 
 const publicKey = fs.readFileSync(path.resolve(`${process.env.JWT_PUBLIC_PATH}`), "utf-8");
 // console.log("Public Key", publicKey);
@@ -18,14 +20,14 @@ const configurePassport = (db) => {
   passport.use(
     new jwtStrategy(options, async (jwt_payload, done) => {
       try {
-        const [rows] = await db.query(
-          "SELECT id, user_uuid, first_name, last_name, email, status, created_at, updated_at FROM users where user_uuid = ?",
-          [jwt_payload.user_uuid],
-        );
+        const rows = await userRepository.findByUUID(jwt_payload.user_uuid, db);
+        // console.log("User from payload", rows);
+        if (!rows) throw new APIError("Invalid Token", 400, ERROR_CODES.TOKEN_EXPIRED);
         const user = rows?.[0] ?? rows;
-
-        const permissions = await getPermissions(db, user.id);
-        user.permissions = permissions;
+        // console.log("User:", user);
+        const permissions = await permissionRepository.getUserPermissionsById(user.id, db);
+        user.permissions = new Set(permissions.map((p) => p.name));
+        // console.log(user.permissions);
 
         if (!user || (Array.isArray(rows) && rows.length === 0)) {
           return done(null, false, { message: "User not found" });

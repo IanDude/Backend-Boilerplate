@@ -1,186 +1,90 @@
-import { upload } from "../util/file/upload.js";
+import { upload, FILE_TYPE_CONFIGS } from "../util/file/upload.js";
 import { fileIntegrityMiddleware } from "../util/file/fileIntegrity.js";
 import { compressImage } from "../util/file/image-compress.js";
 
-const ALLOWED_IMAGE_TYPES = {
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/png": [".png"],
-  "image/gif": [".gif"],
-  "image/webp": [".webp"],
+const UPLOAD_TYPE_CONFIGS = {
+  images: {
+    uploadType: "images",
+    field: { single: "image", multiple: "images" },
+    fileType: "image",
+    maxFileSize: 5 * 1024 * 1024,
+    maxCount: 5,
+    allowedTypes: FILE_TYPE_CONFIGS.images,
+    compress: true,
+  },
+  documents: {
+    uploadType: "documents",
+    field: { single: "document", multiple: "documents" },
+    fileType: "document",
+    maxFileSize: 10 * 1024 * 1024,
+    maxCount: 3,
+    allowedTypes: FILE_TYPE_CONFIGS.documents,
+    compress: false,
+  },
+  audios: {
+    uploadType: "audios",
+    field: { single: "audio", multiple: "audios" },
+    fileType: "audio",
+    maxFileSize: 10 * 1024 * 1024,
+    maxCount: 3,
+    allowedTypes: FILE_TYPE_CONFIGS.audios,
+    compress: false,
+  },
+  videos: {
+    uploadType: "videos",
+    field: { single: "video", multiple: "videos" },
+    fileType: "video",
+    maxFileSize: 50 * 1024 * 1024,
+    maxCount: 3,
+    allowedTypes: FILE_TYPE_CONFIGS.videos,
+    compress: false,
+  },
 };
 
-const ALLOWED_DOCS_TYPES = {
-  "application/pdf": [".pdf"],
-  "application/msword": [".doc"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-  "text/csv": [".csv"],
-  "text/plain": [".txt"],
-};
+function fileUpload(type, options = {}) {
+  const config = UPLOAD_TYPE_CONFIGS[type];
+  if (!config) throw new Error(`Unknown upload type: ${type}`);
 
-const ALLOWED_AUDIO_TYPES = {
-  "audio/mpeg": [".mp3"],
-  "audio/wav": [".wav"],
-  "audio/wave": [".wav"],
-};
-
-const ALLOWED_VIDEO_TYPES = {
-  "video/mp4": [".mp4"],
-  "video/quicktime": [".mov"],
-  "video/x-msvideo": [".avi"],
-  "video/webm": [".webm"],
-};
-
-export const imageUpload = (options = {}) => {
   const {
     multiple = false,
-    field = multiple ? "images" : "image",
-    maxCount = 5,
-    maxFileSize = 5 * 1024 * 1024,
+    field = multiple ? config.field.multiple : config.field.single,
+    fileType = config.fileType,
+    uploadType = config.uploadType,
+    category = null,
+    maxFileSize = config.maxFileSize,
+    maxCount = config.maxCount,
     compressionProfile = "general",
-    filePath = (req) => `uploads/${req.user.user_uuid}/${field}`,
-    allowedTypes = ALLOWED_IMAGE_TYPES,
+    allowedTypes = config.allowedTypes,
   } = options;
 
+  const filePath = (req) => `uploads/${req.user.user_uuid}/${fileType}${category ? `/${category}` : ""}`;
+
   const multerMiddleware = multiple
-    ? upload({ filePath, fileTypes: ["images"], maxFileSize }).array(field, maxCount)
-    : upload({ filePath, fileTypes: ["images"], maxFileSize }).single(field);
+    ? upload({ filePath, fileTypes: [config.uploadType], maxFileSize, maxCount }).array(field, maxCount)
+    : upload({ filePath, fileTypes: [config.uploadType], maxFileSize }).single(field);
 
   const integrityMiddleware = fileIntegrityMiddleware({ allowedTypes, maxFileSize });
-
-  const compressMiddleware = compressImage(compressionProfile);
+  const compressMiddleware = config.compress ? compressImage(compressionProfile) : null;
 
   return (req, res, next) => {
-    console.log("Multer Started >>>");
-
     multerMiddleware(req, res, (err) => {
       if (err) return next(err);
-      console.log("Request File: ", req.file);
-      console.log("Request Body: ", req.body);
-      // console.log("File MimeType: ", req.file.mimetype || req.files.mimetype);
-      // console.log("File/s uploaded: ", req.file || req.files);
-      console.log("Multer Done <<<");
-      console.log("Integrity Checks Started >>>");
       integrityMiddleware(req, res, (err) => {
         if (err) return next(err);
-
-        console.log("Integrity Checks Done <<<");
-        console.log("Compression Initiated >>>");
-
+        req.upload = {
+          scan: req.file ? req.fileScanResult : req.fileScanResults,
+          fileType,
+          category,
+        };
+        if (!compressMiddleware) return next();
         compressMiddleware(req, res, (err) => {
           if (err) return next(err);
           if (res.headersSent) return;
-
-          console.log("Compression Done");
-
           next();
         });
       });
     });
   };
+}
 
-  // return [multerMiddleware, fileIntegrityMiddleware({ allowedTypes, maxFileSize }), compressImage(compressionProfile)];
-};
-
-export const docsUpload = (options = {}) => {
-  const {
-    multiple = false,
-    field = multiple ? "files" : "file",
-    maxFileSize = 10 * 1024 * 1024,
-    maxCount = 3,
-    filePath = (req) => `uploads/${req.user.user_uuid}/documents`,
-    allowedTypes = ALLOWED_DOCS_TYPES,
-  } = options;
-
-  const multerMiddleware = multiple
-    ? upload({ filePath, fileTypes: ["documents"], maxFileSize }).array(field, maxCount)
-    : upload({ filePath, fileTypes: ["documents"], maxFileSize }).single(field);
-
-  const integrityMiddleware = fileIntegrityMiddleware({ allowedTypes, maxFileSize });
-
-  return (req, res, next) => {
-    console.log("Multer Started >>>");
-
-    multerMiddleware(req, res, (err) => {
-      if (err) return next(err);
-      console.log("Multer Finished <<<");
-      console.log("Integrity Checks Started >>>");
-      integrityMiddleware(req, res, (err) => {
-        if (err) return next(err);
-
-        console.log("Integrity Checks Finished <<<");
-
-        next();
-      });
-    });
-  };
-
-  // return [multerMiddleware, fileIntegrityMiddleware({ allowedTypes, maxFileSize })];
-};
-
-export const audioUpload = (options = {}) => {
-  const {
-    multiple = false,
-    field = multiple ? "audios" : "audio",
-    maxFileSize = 10 * 1024 * 1024,
-    maxCount = 3,
-    filePath = (req) => `uploads/${req.user.user_uuid}/audios`,
-    allowedTypes = ALLOWED_AUDIO_TYPES,
-  } = options;
-
-  const multerMiddleware = multiple
-    ? upload({ filePath, fileTypes: ["audio"], maxFileSize }).array(field, maxCount)
-    : upload({ filePath, fileTypes: ["audio"], maxFileSize }).single(field);
-
-  const integrityMiddleware = fileIntegrityMiddleware({ allowedTypes, maxFileSize });
-
-  return (req, res, next) => {
-    console.log("Multer for audio started >>>");
-
-    multerMiddleware(req, res, (err) => {
-      if (err) return next(err);
-      console.log("Multer for audio finished <<<");
-
-      console.log("Integrity Checks Started >>>");
-      integrityMiddleware(req, res, (err) => {
-        if (err) return next(err);
-        console.log("Integrity Checks Finished <<<");
-        next();
-      });
-    });
-  };
-
-  // return [multerMiddleware, fileIntegrityMiddleware({ allowedTypes, maxFileSize })];
-};
-
-export const videoUpload = (options = {}) => {
-  const {
-    multiple = false,
-    field = multiple ? "videos" : "video",
-    maxFileSize = 50 * 1024 * 1024,
-    maxCount = 3,
-    filePath = (req) => `uploads/${req.user.user_uuid}/videos`,
-    allowedTypes = ALLOWED_VIDEO_TYPES,
-  } = options;
-
-  const multerMiddleware = multiple
-    ? upload({ filePath, fileTypes: ["video"], maxFileSize }).array(field, maxCount)
-    : upload({ filePath, fileTypes: ["video"], maxFileSize }).single(field);
-
-  const integrityMiddleware = fileIntegrityMiddleware({ allowedTypes, maxFileSize });
-
-  return (req, res, next) => {
-    console.log("Multer for videos started >>>");
-    multerMiddleware(req, res, (err) => {
-      if (err) return next(err);
-      console.log("Multer for videos finished <<<");
-      console.log("Integrity Checks Started >>>");
-      integrityMiddleware(req, res, (err) => {
-        if (err) return next(err);
-        console.log("Integrity Checks Finished <<<");
-        next();
-      });
-    });
-  };
-
-  // return [multerMiddleware, fileIntegrityMiddleware({ allowedTypes, maxFileSize })];
-};
+export default fileUpload;

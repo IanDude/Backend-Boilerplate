@@ -5,8 +5,10 @@ import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import APIError, { ERROR_CODES } from "../APIError.js";
-import { catchAsync } from "../catchAsync.js";
-const FILE_TYPE_CONFIGS = {
+import catchAsync from "../catchAsync.js";
+import { getFileExtension } from "./fileHelpers.js";
+
+export const FILE_TYPE_CONFIGS = {
   images: {
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"],
@@ -27,14 +29,14 @@ const FILE_TYPE_CONFIGS = {
     "text/plain": [".txt"],
     "text/csv": [".csv"],
   },
-  audio: {
+  audios: {
     "audio/mpeg": [".mp3"],
     "audio/wav": [".wav"],
     "audio/wave": [".wav"],
     "audio/ogg": [".ogg"],
     "audio/aac": [".aac"],
   },
-  video: {
+  videos: {
     "video/mp4": [".mp4"],
     "video/quicktime": [".mov"],
     "video/x-msvideo": [".avi"],
@@ -74,7 +76,7 @@ const validateFile = (allowedTypes, mimeType, fileExt) => {
 const storage = (options) =>
   multer.diskStorage({
     destination: (req, _file, cb) => {
-      const destPath = path.join("public", options.filePath(req, _file));
+      const destPath = path.join("storage", options.filePath(req, _file));
       const isExists = fs.existsSync(destPath);
       if (!isExists) {
         fs.mkdirSync(destPath, { recursive: true });
@@ -83,9 +85,9 @@ const storage = (options) =>
       cb(null, destPath);
     },
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
+      const ext = getFileExtension(file.originalname);
       const date = moment().format("YYYYMMDDHHmmss");
-      const filename = `${crypto.createHash("sha256").update(Date.now().toString()).digest("hex")}${date}${ext}`;
+      const filename = `${crypto.randomUUID()}${date}${ext}`;
 
       cb(null, filename);
     },
@@ -104,11 +106,12 @@ const wrapMulterMethod =
     return (req, res, next) => {
       middleware(req, res, (err) => {
         if (err instanceof multer.MulterError) {
+          // console.log("Error inside upload", err);
           const maxSize = options.maxFileSize || 1024 * 1024 * 3;
           const messages = {
             LIMIT_FILE_SIZE: `File too large. Maximum file size is ${formatFileSize(maxSize)}`,
             LIMIT_FILE_COUNT: "Too many files uploaded",
-            LIMIT_UNEXPECTED_FILE: "Unexpected file field",
+            LIMIT_UNEXPECTED_FILE: `Unexpected file field, or too many files uploaded (max ${options.maxCount ?? "allowed"})`,
           };
           return next(new APIError(messages[err.code] || err.message, 400, ERROR_CODES.VALIDATION_FAILED));
         }
@@ -126,8 +129,9 @@ export const upload = (options) => {
     storage: storage(options),
     fileFilter: (_req, file, cb) => {
       const mimeType = file.mimetype;
-      const fileExt = path.extname(file.originalname).toLowerCase();
-
+      const fileExt = getFileExtension(file.originalname);
+      // console.log("Incoming file:", file.originalname, file.mimetype);
+      // console.log("Incoming file extension:", fileExt);
       // If specific file types are defined, use them
       if (options.fileTypes) {
         const allowedTypes = getAllowedTypes(options.fileTypes);
@@ -136,7 +140,7 @@ export const upload = (options) => {
         if (validation.valid) {
           cb(null, true);
         } else {
-          cb(new APIError(validation.error, 400));
+          cb(new APIError(validation.error, 400, ERROR_CODES.VALIDATION_FAILED));
         }
       }
       // If custom allowedTypes object is provided (legacy support)
@@ -146,10 +150,10 @@ export const upload = (options) => {
         if (validation.valid) {
           cb(null, true);
         } else {
-          cb(new APIError(validation.error, 400));
+          cb(new APIError(validation.error, 400, ERROR_CODES.VALIDATION_FAILED));
         }
       } else {
-        cb(new APIError("Invalid file type", 400));
+        cb(new APIError("Invalid file type", 400, ERROR_CODES.VALIDATION_FAILED));
       }
     },
     limits: {
@@ -165,81 +169,3 @@ export const upload = (options) => {
     any: wrapMulterMethod(multerInstance, multerInstance.any, options),
   };
 };
-/**
- * Compress uploaded images to reduce file size
- * Supports JPEG, PNG, WebP formats
- * Progressively reduces quality until target size is met
- */
-export const compressImage = catchAsync(async (req, res, next) => {
-  console.log("compressImage");
-  if (!req.file) {
-    return next();
-  }
-
-  const filePath = req.file.path;
-  const mimeType = req.file.mimetype;
-  const ext = path.extname(filePath).toLowerCase();
-
-  // Only compress image files
-  const compressibleImages = {
-    "image/jpeg": [".jpg", ".jpeg"],
-    "image/png": [".png"],
-    "image/webp": [".webp"],
-  };
-
-  // Check if file type is compressible
-  if (!compressibleImages[mimeType] || !compressibleImages[mimeType].includes(ext)) {
-    return next();
-  }
-
-  try {
-    let fileSize = fs.statSync(filePath).size;
-    const targetSize = 1024 * 1024; // 1MB target
-    let quality = 80; // Start with higher quality
-
-    // Only compress if file is larger than target
-    if (fileSize <= targetSize) {
-      return next();
-    }
-
-    const tempPath = filePath.replace(ext, `-compressed${ext}`);
-
-    // Compression loop with quality reduction
-    while (fileSize > targetSize && quality >= 20) {
-      // Delete previous temp file if exists
-      if (fs.existsSync(tempPath)) {
-        fs.unlinkSync(tempPath);
-      }
-
-      // Compress image based on format
-      if (mimeType === "image/png") {
-        await sharp(filePath).png({ quality, compressionLevel: 9 }).toFile(tempPath);
-      } else if (mimeType === "image/webp") {
-        await sharp(filePath).webp({ quality }).toFile(tempPath);
-      } else {
-        // JPEG/JPG
-        await sharp(filePath).jpeg({ quality, mozjpeg: true }).toFile(tempPath);
-      }
-
-      fileSize = fs.statSync(tempPath).size;
-      quality -= 10;
-    }
-
-    // Replace original with compressed version
-    fs.unlinkSync(filePath);
-    fs.renameSync(tempPath, filePath);
-
-    // Update req.file with new size
-    req.file.size = fs.statSync(filePath).size;
-  } catch (error) {
-    // If compression fails, continue with original file
-    console.error("Image compression failed:", error);
-    // Clean up temp file if exists
-    const tempPath = filePath.replace(ext, `-compressed${ext}`);
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
-  }
-
-  next();
-});

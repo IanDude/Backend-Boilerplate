@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
-import { catchAsync } from "../catchAsync.js";
+import catchAsync from "../catchAsync.js";
 // Configuration object for different compression scenarios
 const COMPRESSION_CONFIGS = {
   profile: {

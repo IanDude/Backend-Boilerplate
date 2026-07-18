@@ -5,10 +5,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function normalizePath(rawPath) {
-  return rawPath.replace(/\\/g, "/").replace(/^public\//, "");
+  return rawPath.replace(/\\/g, "/");
 }
 
 export function resolvePath(filePath) {
-  const resolvedPath = path.join(__dirname, "../../../public", filePath);
-  return resolvedPath;
+  return path.join(__dirname, "../../../", filePath);
+}
+
+export function getFileExtension(fileString) {
+  return path.extname(fileString).toLowerCase();
 }

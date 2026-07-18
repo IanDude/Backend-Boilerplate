@@ -2,7 +2,7 @@ import winston from "winston";
 import path from "node:path";
 import fs from "node:fs";
 
-const logDir = path.resolve("logs");
+const logDir = path.resolve("storage/logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }

@@ -44,8 +44,7 @@ class Database {
           reject(new Error("Query timeout exceeded"));
         }, timeout);
       });
-      const [rows] = await Promise.race([queryPromise, timeoutPromise]);
-      return rows;
+      return await Promise.race([queryPromise, timeoutPromise]);
     } catch (error) {
       throw error;
     }
