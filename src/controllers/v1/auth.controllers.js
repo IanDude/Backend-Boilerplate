@@ -12,9 +12,6 @@ import authenticate from "../../middlewares/authenticate.js";
 import generateUUID from "../../util/generateUUID.js";
 import * as authService from "../../services/authService.js";
 
-//Test imports
-import * as userRepository from "../../repository/userRepository.js";
-
 const router = Router();
 
 //Get - /check Test endpoint

@@ -40,7 +40,6 @@ app.set("case sensitive routing", false); //makes routes not case-sensitive
 app.set("strict routing", true); //Makes routes strict, does not allow trailing slashes
 app.set("x-powered-by", false); //Remove header advertising usage of express for backend
 
-// app.use(cors()); //TODO: Enhance CORS configuration for production use (restrict origins, methods, etc.)
 app.use(securityHeaders());
 
 //logger instance
@@ -50,7 +49,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use(morgan("dev")) //TODO: Replace with a more robust logging solution for production (e.g., Winston, Bunyan) and configure log levels, formats, and transports
 app.use(requestLogger);
 
 //response wrapper middleware
