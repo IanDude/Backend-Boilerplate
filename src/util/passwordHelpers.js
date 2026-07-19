@@ -3,16 +3,14 @@ import crypto from "node:crypto";
 import APIError from "./APIError.js";
 
 export const hashPassword = async (password) => {
-  const salt = crypto.randomBytes(16).toString("hex");
   try {
     const hashedPassword = await argon2.hash(password, {
-      salt: Buffer.from(salt, "hex"),
       type: argon2.argon2id,
       memoryCost: 4096,
       timeCost: 3,
       parallelism: 1,
     });
-    return { hashedPassword, salt };
+    return hashedPassword;
     // throw Error();
   } catch (error) {
     throw new APIError("An error occured while generating new hash password", 500);
@@ -20,12 +18,9 @@ export const hashPassword = async (password) => {
   }
 };
 
-export const comparePassword = async (password, storedHashedPassword, storedSalt) => {
+export const comparePassword = async (password, storedHashedPassword) => {
   try {
-    const passwordMatched = await argon2.verify(storedHashedPassword, password, {
-      salt: Buffer.from(storedSalt, "hex"),
-      type: argon2.argon2id,
-    });
+    const passwordMatched = await argon2.verify(storedHashedPassword, password);
     return passwordMatched;
   } catch (error) {
     console.error("Error in verifying password", error);
