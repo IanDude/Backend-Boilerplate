@@ -23,7 +23,7 @@ export async function createNewUser({ firstName, lastName, email, status, passwo
   if (userExists) {
     throw new APIError("Email is already taken, use a different one", 409, ERROR_CODES.DUPLICATE_ENTRY);
   }
-  const { hashedPassword, salt } = await hashPassword(password);
+  const hashedPassword = await hashPassword(password);
 
   const newUser = {
     user_uuid: generateUUID(),
@@ -32,7 +32,6 @@ export async function createNewUser({ firstName, lastName, email, status, passwo
     email,
     password: hashedPassword,
     status: status || "active",
-    salt: salt,
   };
 
   const createNewUser = await userRepository.createNewUser(newUser, db);
@@ -52,7 +51,7 @@ export async function createNewUser({ firstName, lastName, email, status, passwo
 
 export async function createNewUserTransac({ firstName, lastName, email, password }, db) {
   const userExists = await userRepository.findByEmail(email, db);
-  const { hashedPassword, salt } = await hashPassword(password);
+  const hashedPassword = await hashPassword(password);
 
   const newUser = {
     user_uuid: generateUUID(),
@@ -61,7 +60,6 @@ export async function createNewUserTransac({ firstName, lastName, email, passwor
     email,
     password: hashedPassword,
     status: "pending",
-    salt,
   };
 
   const insertResult = await userRepository.createNewUser(newUser, db);

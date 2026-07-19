@@ -3,7 +3,7 @@ import APIError, { ERROR_CODES } from "../util/APIError.js";
 export async function findByEmail(email, db) {
   const [result] = await db.query(
     `
-    SELECT id, user_uuid, email, password, salt, status
+    SELECT id, user_uuid, email, password, status
     FROM users WHERE email = ?`,
     [email],
   );

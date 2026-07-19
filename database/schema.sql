@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    salt VARCHAR(255),
     status VARCHAR(50) DEFAULT 'active',
     avatar_path VARCHAR(255),
     gallery_path LONGTEXT(65535),

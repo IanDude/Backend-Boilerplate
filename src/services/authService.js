@@ -15,7 +15,7 @@ export async function login({ email, password }, db) {
     throw new APIError("Account not found", 404, ERROR_CODES.USER_NOT_FOUND);
   }
 
-  const isValid = await comparePassword(password, user.password, user.salt);
+  const isValid = await comparePassword(password, user.password);
 
   if (!isValid) {
     throw new APIError("Invalid email or password", 401, ERROR_CODES.INVALID_CREDENTIALS);
@@ -35,7 +35,7 @@ export async function register({ firstName, lastName, email, password }, db) {
     throw new APIError("Email is taken, use a diffferent one", 409, ERROR_CODES.DUPLICATE_ENTRY);
   }
 
-  const { hashedPassword, salt } = await hashPassword(password);
+  const hashedPassword = await hashPassword(password);
 
   const userData = {
     user_uuid: generateUUID(),
@@ -43,7 +43,6 @@ export async function register({ firstName, lastName, email, password }, db) {
     last_name: lastName,
     email,
     password: hashedPassword,
-    salt,
     status: "active",
   };
 
@@ -93,8 +92,7 @@ export async function resetPassword({ token, newPassword }, db) {
   }
 
   const user_uuid = passwordToken.user_uuid;
-  const { hashedPassword } = await hashPassword(newPassword);
-
+  const hashedPassword = await hashPassword(newPassword);
   const updatePassword = await userRepository.updateUserPassword({ user_uuid, hashedPassword }, db);
 
   if (updatePassword.affectedRows === 0) {
