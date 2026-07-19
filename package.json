@@ -5,8 +5,15 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "prestart": "node scripts/bootstrap.js && npm run migrate",
+    "migrate": "npx sequelize-cli db:migrate",
+    "migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "seed": "npx sequelize-cli db:seed:all",
+    "seed:undo": "npx sequelize-cli db:seed:undo:all",
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "predev": "node scripts/bootstrap.js && npm run migrate",
+    "dev": "node --watch src/server.js",
+    "setup:dev": "node scripts/bootstrap.js && npm run migrate && npm run seed"
   },
   "keywords": [],
   "author": "IanDude",
